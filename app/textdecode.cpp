@@ -14,11 +14,16 @@
 namespace {
   bool isCjkOrPunctuation(ushort u) {
     return (u >= 0x2000 && u <= 0x206F)   // dashes, curly quotes, ellipsis
+        || (u >= 0x2150 && u <= 0x218F)   // Roman numerals ("Volume IV" as Ⅳ)
+        || (u >= 0x2190 && u <= 0x21FF)   // arrows
+        || (u >= 0x2460 && u <= 0x24FF)   // enclosed numbers, ①
+        || (u >= 0x25A0 && u <= 0x27BF)   // shapes, stars, music notes
         || (u >= 0x3000 && u <= 0x303F)   // CJK punctuation
         || (u >= 0x3400 && u <= 0x4DBF)   // CJK extension A
         || (u >= 0x4E00 && u <= 0x9FFF)   // CJK unified ideographs
         || (u >= 0xF900 && u <= 0xFAFF)   // CJK compatibility ideographs
         || (u >= 0xFF01 && u <= 0xFF60)   // fullwidth forms
+        || (u >= 0xFF61 && u <= 0xFFDC)   // halfwidth forms
         || u == 0x00B7;                   // middle dot, very common in artist names
   }
 
@@ -26,16 +31,12 @@ namespace {
   // metadata, not like a Latin name that happened to swallow one ideograph.
   bool looksLikeChinese(const QString &text) {
     int ideographs = 0;
-    int latin_alnum = 0;
     for (const QChar ch : text) {
       const ushort u = ch.unicode();
       if (u < 0x20 && u != u'\t') {
         return false;
       }
       if (u < 0x80) {
-        if (ch.isLetterOrNumber()) {
-          ++latin_alnum;
-        }
         continue;
       }
       if (!isCjkOrPunctuation(u)) {
@@ -45,13 +46,32 @@ namespace {
     }
     // A single ideograph is what a wrong guess looks like: two Latin-1 bytes
     // such as "Ça" decode cleanly into one. Real Chinese metadata has at least
-    // two, and a stray ideograph in a Latin name ("Édith") must not win.
-    if (ideographs < 2) {
-      return false;
+    // two.
+    return ideographs >= 2;
+  }
+
+  // GB2312 keeps every character in two bytes above 0xA0, and that is what
+  // Chinese rippers wrote. A Latin letter following an accented one ("Mötley")
+  // is below 0xA1, so this rejects Latin names that happen to decode into a
+  // couple of ideographs.
+  bool usesGb2312Pairs(const QByteArray &bytes) {
+    int i = 0;
+    const int size = static_cast<int>(bytes.size());
+    while (i < size) {
+      const auto b = static_cast<unsigned char>(bytes.at(i));
+      if (b < 0x80) {
+        ++i;
+        continue;
+      }
+      if (i + 1 >= size) {
+        return false;
+      }
+      if (b < 0xA1 || static_cast<unsigned char>(bytes.at(i + 1)) < 0xA1) {
+        return false;
+      }
+      i += 2;
     }
-    // Mostly-Chinese strings only: "Hélène" read as GBK yields ideographs
-    // sprinkled through a Latin word, which is a wrong guess, not a repair.
-    return ideographs >= latin_alnum;
+    return true;
   }
 
   bool isValidUtf8(const QByteArray &bytes) {
@@ -177,31 +197,30 @@ QString TextDecode::fromLegacyMojibake(const QString &text) {
     bytes.chop(1);
   }
 
-  const QByteArray original = bytes;
+  // UTF-8 written into the Latin-1 field by a UTF-8-aware tool. Chinese GBK
+  // pairs are almost never valid UTF-8 (their second byte is above 0xBF), so
+  // this cannot steal a GBK tag.
+  if (isValidUtf8(bytes)) {
+    const QString decoded = QString::fromUtf8(bytes);
+    if (looksLikeUtf8Text(decoded)) {
+      return decoded;
+    }
+  }
 
-  // ID3v1 fields are fixed width, so a multibyte character cut in half at the
-  // end of the field is normal. Drop the stray bytes before giving up.
-  std::optional<QString> gb18030;
+  // Chinese GBK/GB18030. ID3v1 fields are fixed width, so a multibyte
+  // character cut in half at the end of the field is normal: drop the stray
+  // bytes before giving up.
   for (int attempt = 0; attempt < 3 && !bytes.isEmpty(); ++attempt) {
-    gb18030 = decodeGb18030(bytes);
-    if (gb18030) {
-      break;
+    if (const std::optional<QString> decoded = decodeGb18030(bytes)) {
+      if (looksLikeChinese(*decoded) && usesGb2312Pairs(bytes)) {
+        return *decoded;
+      }
+      return text;
     }
     if (static_cast<unsigned char>(bytes.back()) < 0x80) {
       break;
     }
     bytes.chop(1);
-  }
-  if (gb18030 && looksLikeChinese(*gb18030)) {
-    return *gb18030;
-  }
-
-  // Not Chinese: some tools wrote UTF-8 into the Latin-1 field instead.
-  if (isValidUtf8(original)) {
-    const QString decoded = QString::fromUtf8(original);
-    if (looksLikeUtf8Text(decoded)) {
-      return decoded;
-    }
   }
   return text;
 }

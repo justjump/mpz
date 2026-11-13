@@ -1,5 +1,7 @@
 #include "local.h"
 
+#include "textdecode.h"
+
 #include <QDebug>
 #include <QApplication>
 
@@ -390,9 +392,12 @@ namespace Config {
       Track t(
             r["path"].get<QString>(),
             static_cast<quint32>(r["begin"].get<int>()),
-            r["artist"].get<QString>(),
-            r["album"].get<QString>(),
-            r["title"].get<QString>(),
+            // Playlists saved before the legacy-encoding repair still hold the mojibake
+            // strings they were written with; decode them on load, and the next save
+            // writes the repaired text back.
+            TextDecode::fromLegacyMojibake(r["artist"].get<QString>()),
+            TextDecode::fromLegacyMojibake(r["album"].get<QString>()),
+            TextDecode::fromLegacyMojibake(r["title"].get<QString>()),
             static_cast<quint16>(r["track_number"].get<int>()),
             static_cast<quint16>(r["year"].get<int>()),
             trackDuration(static_cast<quint64>(r["duration"].get<int>())),

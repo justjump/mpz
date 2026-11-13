@@ -8,6 +8,7 @@ private slots:
   void repairsGbkId3v1Mojibake();
   void repairsTrackTitle();
   void repairsMixedLatinAndChinese();
+  void repairsMixedAlbumNames();
   void repairsTruncatedField();
   void repairsUtf8StoredInLatin1Field();
   void keepsProperUnicode();
@@ -23,6 +24,8 @@ void TestTextDecode::repairsGbkId3v1Mojibake() {
 }
 
 void TestTextDecode::repairsTrackTitle() {
+  // Trailing Roman numeral, common in compilation album names.
+  QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("»ÝÍþÊÔÒôÌìµú¢ô")), QStringLiteral("惠威试音天碟Ⅳ"));
   QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("Ãµ¹å»¨µÄÔáÀñ")), QStringLiteral("玫瑰花的葬礼"));
   QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("ÎÞÓëÂ×±ÈµÄÃÀÀö")), QStringLiteral("无与伦比的美丽"));
 }
@@ -31,6 +34,11 @@ void TestTextDecode::repairsMixedLatinAndChinese() {
   QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("F.I.R(·É¶ùÀÖÍÅ)")), QStringLiteral("F.I.R(飞儿乐团)"));
   // Trailing spaces come from the fixed-width ID3v1 field.
   QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("ËÕ´òÂÌ   ")), QStringLiteral("苏打绿"));
+}
+
+void TestTextDecode::repairsMixedAlbumNames() {
+  QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("µËÀö¾ý  Vol.2  LPCD45")), QStringLiteral("邓丽君  Vol.2  LPCD45"));
+  QCOMPARE(TextDecode::fromLegacyMojibake(QStringLiteral("NOWÏÖÔÚ")), QStringLiteral("NOW现在"));
 }
 
 void TestTextDecode::repairsTruncatedField() {
