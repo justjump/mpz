@@ -1,6 +1,8 @@
 #include "tageditordialog.h"
 #include "ui_tageditordialog.h"
 
+#include "textdecode.h"
+
 #include <fileref.h>
 #include <tag.h>
 #include <tpropertymap.h>
@@ -36,7 +38,7 @@ namespace {
     if (values.isEmpty()) {
       return QString();
     }
-    return QString::fromUtf8(values.front().toCString(true));
+    return TextDecode::fromLegacyMojibake(QString::fromUtf8(values.front().toCString(true)));
   }
 
   InitialValues read_initial(const Track &t) {
@@ -45,11 +47,11 @@ namespace {
     if (!f.isNull() && f.tag()) {
       // Read raw tag values directly — Track::title() falls back to filename when the tag is empty, which we don't want in an editor.
       auto *tag = f.tag();
-      v.artist = QString::fromUtf8(tag->artist().toCString(true));
-      v.album = QString::fromUtf8(tag->album().toCString(true));
-      v.title = QString::fromUtf8(tag->title().toCString(true));
-      v.genre = QString::fromUtf8(tag->genre().toCString(true));
-      v.comment = QString::fromUtf8(tag->comment().toCString(true));
+      v.artist = TextDecode::fromLegacyMojibake(QString::fromUtf8(tag->artist().toCString(true)));
+      v.album = TextDecode::fromLegacyMojibake(QString::fromUtf8(tag->album().toCString(true)));
+      v.title = TextDecode::fromLegacyMojibake(QString::fromUtf8(tag->title().toCString(true)));
+      v.genre = TextDecode::fromLegacyMojibake(QString::fromUtf8(tag->genre().toCString(true)));
+      v.comment = TextDecode::fromLegacyMojibake(QString::fromUtf8(tag->comment().toCString(true)));
       if (tag->year() > 0) {
         v.year = QString::number(tag->year());
       }

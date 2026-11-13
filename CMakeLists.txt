@@ -152,6 +152,7 @@ set(PROJECT_SOURCES
   app/sysinfo.cpp
   app/sandboxnotice.cpp
   app/track.cpp
+  app/textdecode.cpp
   app/reveal_in_filemanager.cpp
   app/trayicon.cpp
   app/volumecontrol.cpp
@@ -295,6 +296,18 @@ endif()
 # OBJECT and not STATIC: a static archive drops the AUTORCC resource initializers
 # nothing references, which silently takes the icons and translations with them.
 add_library(${MPZ_LIB} OBJECT ${PROJECT_SOURCES})
+
+# GBK/GB18030 decoding for legacy tags: iconv on Unix, MultiByteToWideChar on
+# Windows (see app/textdecode.cpp).
+if (NOT WIN32)
+  find_package(Iconv)
+  if (Iconv_FOUND)
+    target_compile_definitions(${MPZ_LIB} PRIVATE MPZ_HAVE_ICONV=1)
+    target_link_libraries(${MPZ_LIB} PRIVATE Iconv::Iconv)
+  else()
+    message(STATUS "iconv not found, legacy tag encoding repair disabled")
+  endif()
+endif()
 
 # Tests link the whole library; without per-function sections --gc-sections has
 # nothing to strip and every test binary carries a full copy of the app.

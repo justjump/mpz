@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Tags written as GBK/GB18030 (typical for ID3v1 tags from Chinese rippers) no longer show up as mojibake such as "ËÕ´òÂÌ"; the legacy bytes are detected and decoded, in the playlist, the tag editor, the track info dialog and embedded lyrics. UTF-8 written into a Latin-1 field is repaired the same way
+
 ### Misc
 
 ## [2.1.9] - 2026-11-04 

@@ -5,6 +5,7 @@
 #include "lyrics/providerchain.h"
 #include "lyrics/trackquery.h"
 #include "icons.h"
+#include "textdecode.h"
 
 #include <fileref.h>
 #include <tag.h>
@@ -116,7 +117,7 @@ namespace Lyrics {
     if (it == props.end() || it->second.isEmpty()) {
       return QString();
     }
-    return QString::fromUtf8(it->second.front().toCString(true));
+    return TextDecode::fromLegacyMojibake(QString::fromUtf8(it->second.front().toCString(true)));
   }
 
   QString Widget::fetch_sidecar_lyrics(const Track &track) const {

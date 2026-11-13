@@ -3,6 +3,7 @@
 #include "coverart/covers.h"
 
 #include "taglib_compat.h"
+#include "textdecode.h"
 
 #include "fileref.h"
 #include "tag.h"
@@ -214,17 +215,19 @@ bool Track::readMetadata() {
     const TagLib::PropertyMap props = tag->properties();
 
     const TagLib::StringList album_artist = props.value("ALBUMARTIST");
-    _album_artist = album_artist.isEmpty() ? QString() : QString(album_artist.front().toCString(true));
+    _album_artist = album_artist.isEmpty()
+                      ? QString()
+                      : TextDecode::fromLegacyMojibake(QString(album_artist.front().toCString(true)));
 
     const TagLib::StringList disc = props.value("DISCNUMBER");
     _disc_number = disc.isEmpty() ? QString() : QString(disc.front().toCString(true));
 
-    _artist = QString(tag->artist().toCString(true));
+    _artist = TextDecode::fromLegacyMojibake(QString(tag->artist().toCString(true)));
     if (_artist.isEmpty()) {
       _artist = _album_artist;
     }
-    _album = QString(tag->album().toCString(true));
-    _title = QString(tag->title().toCString(true));
+    _album = TextDecode::fromLegacyMojibake(QString(tag->album().toCString(true)));
+    _title = TextDecode::fromLegacyMojibake(QString(tag->title().toCString(true)));
     _year = static_cast<quint16>(tag->year());
     _track_number = static_cast<quint16>(tag->track());
   }

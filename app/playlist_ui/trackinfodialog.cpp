@@ -3,6 +3,7 @@
 
 #include "icons.h"
 #include "tageditordialog.h"
+#include "textdecode.h"
 #include "config/global.h"
 #include "coverart/online/downloader.h"
 #include "lyrics/lrcparser.h"
@@ -81,7 +82,7 @@ namespace {
   }
 
   QString qstr(const TagLib::String &s) {
-    return QString::fromUtf8(s.toCString(true));
+    return TextDecode::fromLegacyMojibake(QString::fromUtf8(s.toCString(true)));
   }
 
   QString qstr_list(const TagLib::StringList &l) {
@@ -731,7 +732,7 @@ QString TrackInfoDialog::fetch_embedded_lyrics() const {
   if (it == props.end() || it->second.isEmpty()) {
     return QString();
   }
-  return QString::fromUtf8(it->second.front().toCString(true));
+  return TextDecode::fromLegacyMojibake(QString::fromUtf8(it->second.front().toCString(true)));
 }
 
 QString TrackInfoDialog::fetch_sidecar_lyrics() const {
