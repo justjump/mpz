@@ -11,7 +11,7 @@ namespace Icons {
     VolumeMuted, VolumeLow, VolumeMedium, VolumeHigh, Headphones, Settings, Menu, Sort,
     Trash, Folder, FolderReveal, Reload, Save, Info, Details, Help, Cancel,
     Copy, Edit, OpenFile, NewPlaylist, AddToPlaylist, MoveToPlaylist, Spinner,
-    Radio, DynamicRange
+    Radio, DynamicRange, Heart, HeartFilled
   };
 
   QIcon get(Icon icon);

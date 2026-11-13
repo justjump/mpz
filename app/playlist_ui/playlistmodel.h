@@ -6,6 +6,7 @@
 #include "playlist_ui/columnsconfig.h"
 
 #include <QFuture>
+#include <QSet>
 #include <QVector>
 #include <QAbstractTableModel>
 #include <memory>
@@ -25,7 +26,8 @@ namespace PlaylistUi {
     enum Roles {
       IsStreamRole = Qt::UserRole + 1,
       StationNameRole,
-      StreamNowPlayingRole
+      StreamNowPlayingRole,
+      FavoriteRole
     };
     explicit Model(QStyle *stl, const ColumnsConfig &col_cfg, QObject *parent = nullptr);
 
@@ -42,6 +44,10 @@ namespace PlaylistUi {
     bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent) override;
 
     void setPlaylist(std::shared_ptr<Playlist::Playlist> pl);
+    // The last column shows the heart; the state comes from the Favorites
+    // playlist, which lives outside this model.
+    int favoriteColumn() const;
+    void setFavoritePaths(const QSet<QString> &paths);
 
     Track itemAt(const QModelIndex &index) const;
     const Track &trackAt(int row) const; // row must be in [0, tracksSize())
@@ -75,6 +81,7 @@ namespace PlaylistUi {
 
     std::shared_ptr<Playlist::Playlist> _playlist;
     QVector<Track> tracks;
+    QSet<QString> favorite_paths;
     quint64 highlight_uid = 0;
     QStyle *style;
     enum HighlightState highlight_state = None;

@@ -40,6 +40,7 @@ public:
     OpenMainMenu,
     OpenPlaybackLog,
     OpenSortMenu,
+    ToggleFavorite,
     OpenOutputMenu,
     JumpToPlayingTrack
   };
@@ -87,6 +88,7 @@ signals:
   void openMainMenu();
   void openPlabackLog();
   void openSortMenu();
+  void toggleFavorite();
   void openOutputMenu();
   void jumpToPLayingTrack();
 

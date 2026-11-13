@@ -1,5 +1,6 @@
 #include "playlistsmodel.h"
 #include "playlist/loader.h"
+#include "icons.h"
 
 #include <QDebug>
 #include <QtConcurrent>
@@ -156,6 +157,10 @@ namespace PlaylistsUi {
       } else {
         return none;
       }
+    }
+
+    if (role == Qt::DecorationRole && pl->favorites()) {
+      return Icons::get(Icons::Icon::HeartFilled);
     }
 
     return none;

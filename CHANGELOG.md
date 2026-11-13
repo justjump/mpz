@@ -2,6 +2,8 @@
 
 ### Added
 
+- Favorites: a heart column at the end of the track list toggles a track in a dedicated "Favorites" playlist, which is created on the first heart, persists like any other playlist and cannot be renamed or removed. Hearts are visible from every playlist, and `Ctrl/Cmd+Shift+F` toggles the selected tracks. The column shows a muted outline for the rest of the library so it stays discoverable
+- Simplified Chinese interface (`zh_CN`), selectable in Settings → Interface → Language and picked up automatically when the system locale is Chinese
 - Playlist search: the track filter moved above the track list and now shows how many tracks match (`12 of 3450`). Enter jumps to the first hit, Esc clears it and the term is kept after jumping, so Enter + Enter starts playing the match. Ctrl/Cmd+F focuses the field, matching title, artist, album and file name
 - Cross-playlist search: ticking `All playlists` lists the matches from every playlist in a popup under the field, labelled with the playlist they belong to. Arrow keys move through the hits, Enter or a click opens that playlist with the track selected
 

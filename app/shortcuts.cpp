@@ -48,6 +48,7 @@ const QVector<Shortcuts::Spec> &Shortcuts::defaults() {
     t << Spec{Action::OpenMainMenu, "open_main_menu", tr("Open main menu"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_M), true};
     t << Spec{Action::OpenPlaybackLog, "open_playback_log", tr("Open playback log"), QKeySequence(Qt::CTRL | Qt::Key_L), true};
     t << Spec{Action::OpenSortMenu, "open_sort_menu", tr("Open sort menu"), QKeySequence(Qt::CTRL | Qt::Key_S), true};
+    t << Spec{Action::ToggleFavorite, "toggle_favorite", tr("Add to / remove from Favorites"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F), true};
 #ifdef ENABLE_DEVICES_MENU
     t << Spec{Action::OpenOutputMenu, "open_output_menu", tr("Open output device menu"), QKeySequence(Qt::CTRL | Qt::Key_D), true};
 #endif
@@ -72,6 +73,7 @@ const QVector<Shortcuts::Spec> &Shortcuts::defaults() {
     t << Spec{Action::OpenMainMenu, "open_main_menu", tr("Open main menu"), QKeySequence(Qt::ALT | Qt::Key_M), true};
     t << Spec{Action::OpenPlaybackLog, "open_playback_log", tr("Open playback log"), QKeySequence(Qt::CTRL | Qt::Key_L), true};
     t << Spec{Action::OpenSortMenu, "open_sort_menu", tr("Open sort menu"), QKeySequence(Qt::CTRL | Qt::Key_S), true};
+    t << Spec{Action::ToggleFavorite, "toggle_favorite", tr("Add to / remove from Favorites"), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_F), true};
 #ifdef ENABLE_DEVICES_MENU
     t << Spec{Action::OpenOutputMenu, "open_output_menu", tr("Open output device menu"), QKeySequence(Qt::CTRL | Qt::Key_D), true};
 #endif
@@ -237,6 +239,7 @@ void Shortcuts::emitFor(Action action) {
     case Action::OpenMainMenu: emit openMainMenu(); break;
     case Action::OpenPlaybackLog: emit openPlabackLog(); break;
     case Action::OpenSortMenu: emit openSortMenu(); break;
+    case Action::ToggleFavorite: emit toggleFavorite(); break;
     case Action::OpenOutputMenu: emit openOutputMenu(); break;
     case Action::JumpToPlayingTrack: emit jumpToPLayingTrack(); break;
   }

@@ -32,6 +32,8 @@ namespace PlaylistUi {
     // Selects and centers the track with this file path, if the current filter
     // still shows it. Used after jumping to a playlist from a global search.
     void selectTrack(const QString &path);
+    // Heart state shown in the last column, owned by the Favorites playlist.
+    void setFavoritePaths(const QSet<QString> &paths);
 
   signals:
     void activated(const Track &track);
@@ -42,6 +44,7 @@ namespace PlaylistUi {
     void createPlaylistRequested(const QList<QDir> &filepaths, const QString &libraryDir);
     void createPlaylistFromTracksRequested(const QVector<Track> &tracks, const QString &name);
     void trackInfoRequested(const Track &track);
+    void favoriteToggled(const Track &track);
     // Non-zero match count only while a search term is active.
     void searchResultsChanged(int matched, int total);
 

@@ -55,6 +55,14 @@ namespace Playlist {
     }
   }
 
+  bool Playlist::favorites() const {
+    return _favorites;
+  }
+
+  void Playlist::setFavorites(bool value) {
+    _favorites = value;
+  }
+
   quint64 Playlist::uid() const {
     return _uid;
   }

@@ -134,6 +134,15 @@ MainWindow::MainWindow(const QStringList &args, IPC::Instance *instance, Config:
   connect(playlist, &PlaylistUi::Controller::createPlaylistFromTracksRequested, playlists, &PlaylistsUi::Controller::on_createPlaylistFromTracks);
   connect(playlists, &PlaylistsUi::Controller::removeTracksRequested, playlist, &PlaylistUi::Controller::on_removeTracks);
   connect(playlists, &PlaylistsUi::Controller::tracksAppended, playlist, &PlaylistUi::Controller::on_tracksAppended);
+  connect(playlist, &PlaylistUi::Controller::favoriteToggled, this, [this](const Track &t) {
+    playlists->toggleFavorite(t);
+  });
+  connect(playlists, &PlaylistsUi::Controller::favoritesChanged, this, [this]() {
+    playlist->setFavoritePaths(playlists->favoritePaths());
+  });
+  connect(playlists, &PlaylistsUi::Controller::asyncLoadFinished, this, [this]() {
+    playlist->setFavoritePaths(playlists->favoritePaths());
+  });
   connect(playlists, &PlaylistsUi::Controller::selected, playlist, &PlaylistUi::Controller::on_load);
   connect(playlists, &PlaylistsUi::Controller::emptied, playlist, &PlaylistUi::Controller::on_unload);
   connect(playlist, &PlaylistUi::Controller::activated, player, &Playback::Controller::play);
@@ -900,6 +909,12 @@ void MainWindow::setupShortcuts() {
   connect(shortcuts, &Shortcuts::openMainMenu, main_menu, &MainMenu::on_open);
 
   connect(shortcuts, &Shortcuts::openSortMenu, ui->sortButton, &QToolButton::click);
+
+  connect(shortcuts, &Shortcuts::toggleFavorite, this, [this]() {
+    for (const Track &t : playlist->selectedTracks()) {
+      playlists->toggleFavorite(t);
+    }
+  });
 
 #ifdef ENABLE_DEVICES_MENU
   connect(shortcuts, &Shortcuts::openOutputMenu, ui->toolButtonOutputDevice, &QToolButton::click);

@@ -55,6 +55,7 @@ private slots:
   void streamBufferDefaultIsPersisted();
   void trayIconStaysOffWhenDisabled();
   void crossPlaylistSearchListsHitsAndJumpsToThem();
+  void heartClickAddsTheTrackToFavorites();
 
 private:
   GuiTest::ConfigDir config;
@@ -296,6 +297,46 @@ void TestMainWindow::crossPlaylistSearchListsHitsAndJumpsToThem() {
   QVERIFY(tracks_view != nullptr);
   QTRY_VERIFY(tracks_view->currentIndex().isValid());
   QCOMPARE(tracks_view->currentIndex().siblingAtColumn(3).data().toString(), QString("Dogs"));
+}
+
+void TestMainWindow::heartClickAddsTheTrackToFavorites() {
+  auto *playlists_view = window->findChild<QListView *>("listView");
+  auto *proxy = qobject_cast<PlaylistsUi::ProxyFilterModel *>(playlists_view->model());
+  auto *model = qobject_cast<PlaylistsUi::Model *>(proxy->sourceModel());
+  QVERIFY(model != nullptr);
+
+  int rock_row = -1;
+  for (int i = 0; i < model->rowCount(); ++i) {
+    const auto pl = model->itemAt(model->index(i, 0));
+    if (pl != nullptr && pl->name() == "rock") {
+      rock_row = i;
+      break;
+    }
+  }
+  QVERIFY(rock_row >= 0);
+  const QModelIndex rock = proxy->index(rock_row, 0);
+  QTest::mouseClick(playlists_view->viewport(), Qt::LeftButton, Qt::NoModifier, playlists_view->visualRect(rock).center());
+
+  auto *tracks_view = window->findChild<QTableView *>("tableView");
+  QVERIFY(tracks_view != nullptr);
+  QTRY_VERIFY(tracks_view->model()->rowCount() > 0);
+
+  const int heart_column = tracks_view->model()->columnCount() - 1;
+  const QRect cell = tracks_view->visualRect(tracks_view->model()->index(0, heart_column));
+  QTest::mouseClick(tracks_view->viewport(), Qt::LeftButton, Qt::NoModifier, cell.center());
+
+  std::shared_ptr<Playlist::Playlist> favorites;
+  QTRY_VERIFY([&]() {
+    for (const auto &p : model->itemList()) {
+      if (p->favorites()) {
+        favorites = p;
+        return true;
+      }
+    }
+    return false;
+  }());
+  QCOMPARE(favorites->name(), QString("Favorites"));
+  QCOMPARE(favorites->tracks().size(), 1);
 }
 
 void TestMainWindow::trayIconStaysOffWhenDisabled() {

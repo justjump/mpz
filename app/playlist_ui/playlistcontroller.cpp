@@ -31,7 +31,7 @@ namespace PlaylistUi {
 
     proxy = new ProxyFilterModel(view->style(), columns_config, modus, this);
     view->setModel(proxy);
-    view->setItemDelegate(new StreamRowDelegate(this));
+    view->setItemDelegate(new StreamRowDelegate(this, columns_config.count() + 1));
     view->horizontalHeader()->setVisible(global_conf.showPlaylistHeaders());
     view->horizontalHeader()->setSectionsClickable(false);
     view->verticalHeader()->hide();
@@ -263,6 +263,16 @@ namespace PlaylistUi {
   }
 
   bool Controller::eventFilter(QObject *obj, QEvent *event) {
+    if (obj == view->viewport() && event->type() == QEvent::MouseButtonPress) {
+      auto *me = static_cast<QMouseEvent *>(event);
+      if (me->button() == Qt::LeftButton) {
+        const QModelIndex index = view->indexAt(me->pos());
+        if (index.isValid() && index.column() == proxy->activeModel()->favoriteColumn()) {
+          emit favoriteToggled(proxy->activeModel()->trackAt(proxy->mapToSource(index).row()));
+          return true;
+        }
+      }
+    }
     if (obj == view->viewport()) {
       if (handleDnd(event)) {
         return true;
@@ -376,6 +386,7 @@ namespace PlaylistUi {
           view->horizontalHeader()->setSectionResizeMode(col, QHeaderView::Stretch);
         }
       }
+      view->setColumnWidth(columns_config.count() + 1, 26);
 
     } else if (event->type() == QEvent::WindowActivate) {
       if (restore_scroll_once) {
@@ -452,6 +463,10 @@ namespace PlaylistUi {
   QVector<Track> Controller::currentTracks() const {
     const auto playlist = proxy->activeModel()->playlist();
     return playlist == nullptr ? QVector<Track>() : playlist->tracks();
+  }
+
+  void Controller::setFavoritePaths(const QSet<QString> &paths) {
+    proxy->activeModel()->setFavoritePaths(paths);
   }
 
   void Controller::selectTrack(const QString &path) {

@@ -15,6 +15,7 @@
 #include <QPoint>
 #include <QDir>
 #include <QDropEvent>
+#include <QSet>
 #include <QVector>
 #include <QModelIndex>
 #include <memory>
@@ -34,6 +35,14 @@ namespace PlaylistsUi {
     explicit Controller(QListView *view, QLineEdit *search, Config::Local &conf, BackgroundTasks *_tasks, ModusOperandi &modus, QObject *parent = nullptr);
     std::shared_ptr<Playlist::Playlist> playlistByTrackUid(quint64 track_uid) const;
     std::shared_ptr<Playlist::Playlist> playlistByUid(quint64 uid) const;
+    // Favorites live in one dedicated playlist so they persist, sort and play
+    // like any other list. Membership is matched by file path: track uids are
+    // minted per load, paths are what survives a restart.
+    std::shared_ptr<Playlist::Playlist> favoritesPlaylist() const;
+    bool isFavorite(const QString &path) const;
+    QSet<QString> favoritePaths() const;
+    void setFavorite(const Track &track, bool favorite);
+    void toggleFavorite(const Track &track);
     // Matches title, artist, album and file name in every playlist, in playlist
     // order, stopping at limit results.
     QVector<TrackSearchHit> searchTracks(const QString &term, int limit) const;
@@ -50,6 +59,7 @@ namespace PlaylistsUi {
     void on_stop();
 
   signals:
+    void favoritesChanged();
     void selected(const std::shared_ptr<Playlist::Playlist> item);
     void loaded(const std::shared_ptr<Playlist::Playlist> item);
     void emptied();

@@ -1,4 +1,5 @@
 #include "playlistmodel.h"
+#include "icons.h"
 #include "playlist/loader.h"
 #include "icons.h"
 #include "tracksmimedata.h"
@@ -47,12 +48,29 @@ namespace PlaylistUi {
     if (parent.isValid()) {
       return 0;
     }
+    return columns_config.count() + 2;
+  }
+
+  int Model::favoriteColumn() const {
     return columns_config.count() + 1;
+  }
+
+  void Model::setFavoritePaths(const QSet<QString> &paths) {
+    if (favorite_paths == paths) {
+      return;
+    }
+    favorite_paths = paths;
+    if (!tracks.isEmpty()) {
+      emit dataChanged(index(0, favoriteColumn()), index(tracks.size() - 1, favoriteColumn()), {FavoriteRole});
+    }
   }
 
   QVariant Model::headerData(int section, Qt::Orientation orientation, int role) const {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole || section < 1) {
       return QVariant();
+    }
+    if (section == favoriteColumn()) {
+      return QString();
     }
     return columns_config.field(section);
   }
@@ -67,12 +85,21 @@ namespace PlaylistUi {
     if (role == Qt::TextAlignmentRole) {
       if (index.column() == 0) {
         return Qt::AlignVCenter;
+      } else if (index.column() == favoriteColumn()) {
+        return Qt::AlignCenter;
       } else {
         return QVariant(columns_config.align(index.column()));
       }
     }
 
     Track t = tracks.at(index.row());
+
+    if (index.column() == favoriteColumn()) {
+      if (role == FavoriteRole) {
+        return favorite_paths.contains(t.path());
+      }
+      return none;
+    }
 
     if (role == IsStreamRole) {
       return t.isStream();

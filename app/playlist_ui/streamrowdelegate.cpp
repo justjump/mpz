@@ -18,10 +18,30 @@ namespace {
 }
 
 namespace PlaylistUi {
-  StreamRowDelegate::StreamRowDelegate(QObject *parent) : QStyledItemDelegate(parent) {
+  StreamRowDelegate::StreamRowDelegate(QObject *parent, int heart_column) : QStyledItemDelegate(parent), heart_column(heart_column) {
   }
 
   void StreamRowDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
+    if (index.column() == heart_column) {
+      QStyleOptionViewItem opt = option;
+      initStyleOption(&opt, index);
+      opt.text.clear();
+      opt.icon = QIcon();
+      auto *style = opt.widget ? opt.widget->style() : QApplication::style();
+      style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, opt.widget);
+
+      const bool favorite = index.data(Model::FavoriteRole).toBool();
+      const bool selected = opt.state & QStyle::State_Selected;
+      const int size = qBound(10, opt.rect.height() - 8, 16);
+      // Unfavorited rows get a muted outline: the column has to be discoverable
+      // without turning the track list into a wall of hearts.
+      const QIcon::Mode mode = selected ? QIcon::Selected : (favorite ? QIcon::Normal : QIcon::Disabled);
+      const QPixmap pm = Icons::pixmap(favorite ? Icons::Icon::HeartFilled : Icons::Icon::Heart, QSize(size, size), mode);
+      const QRect target(opt.rect.center().x() - size / 2, opt.rect.center().y() - size / 2, size, size);
+      painter->drawPixmap(target, pm);
+      return;
+    }
+
     // Files, and column 0 of a stream row (the play/pause icon slot), render normally.
     if (index.column() == 0 || !isStreamRow(index)) {
       QStyledItemDelegate::paint(painter, option, index);

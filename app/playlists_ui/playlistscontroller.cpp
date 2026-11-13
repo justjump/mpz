@@ -91,6 +91,76 @@ namespace PlaylistsUi {
     return proxy->activeModel()->itemByTrack(track_uid);
   }
 
+  std::shared_ptr<Playlist::Playlist> Controller::favoritesPlaylist() const {
+    for (const auto &pl : proxy->activeModel()->itemList()) {
+      if (pl != nullptr && pl->favorites()) {
+        return pl;
+      }
+    }
+    return nullptr;
+  }
+
+  bool Controller::isFavorite(const QString &path) const {
+    if (path.isEmpty()) {
+      return false;
+    }
+    if (const auto pl = favoritesPlaylist()) {
+      for (const Track &t : pl->tracks()) {
+        if (t.path() == path) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  QSet<QString> Controller::favoritePaths() const {
+    QSet<QString> paths;
+    if (const auto pl = favoritesPlaylist()) {
+      for (const Track &t : pl->tracks()) {
+        paths.insert(t.path());
+      }
+    }
+    return paths;
+  }
+
+  void Controller::toggleFavorite(const Track &track) {
+    setFavorite(track, !isFavorite(track.path()));
+  }
+
+  void Controller::setFavorite(const Track &track, bool favorite) {
+    if (track.path().isEmpty() || track.isStream()) {
+      return;
+    }
+    auto pl = favoritesPlaylist();
+    if (favorite) {
+      if (isFavorite(track.path())) {
+        return;
+      }
+      if (pl == nullptr) {
+        pl = std::shared_ptr<Playlist::Playlist>(new Playlist::Playlist());
+        pl->setFavorites(true);
+        pl->rename(tr("Favorites"));
+        proxy->activeModel()->append(pl);
+      }
+      pl->append({track}, false);
+      proxy->activeModel()->persist();
+    } else {
+      if (pl == nullptr) {
+        return;
+      }
+      const QVector<Track> tracks = pl->tracks();
+      for (int i = 0; i < tracks.size(); ++i) {
+        if (tracks.at(i).path() == track.path()) {
+          pl->removeTrack(i);
+          proxy->activeModel()->persist();
+          break;
+        }
+      }
+    }
+    emit favoritesChanged();
+  }
+
   std::shared_ptr<Playlist::Playlist> Controller::playlistByUid(quint64 uid) const {
     return proxy->activeModel()->itemBy(uid);
   }
@@ -295,6 +365,12 @@ namespace PlaylistsUi {
 
   void Controller::on_removeItem(const QModelIndex &index) {
     if (!index.isValid()) {
+      return;
+    }
+    // Favorites are managed by the app; deleting the list would drop every
+    // heart in the collection.
+    const auto item = proxy->itemAt(index);
+    if (item != nullptr && item->favorites()) {
       return;
     }
     const int row = index.row();

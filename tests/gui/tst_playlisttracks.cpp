@@ -53,6 +53,8 @@ private slots:
   void searchReportsHowManyTracksMatch();
   void enterInSearchJumpsToTheFirstMatch();
   void selectTrackCentersTheGivenPath();
+  void favoriteColumnReflectsFavoritePaths();
+  void clickingTheHeartColumnEmitsFavoriteToggled();
   void escapeInSearchClearsTheFilter();
   void sortByReordersThePlaylist();
   void unloadClearsTheView();
@@ -223,6 +225,33 @@ void TestPlaylistTracks::enterInSearchJumpsToTheFirstMatch() {
   QVERIFY(view.selectionModel()->isRowSelected(0, QModelIndex()));
   // The term is kept, so pressing Enter again plays the highlight.
   QCOMPARE(search.text(), QStringLiteral("bbb"));
+}
+
+void TestPlaylistTracks::favoriteColumnReflectsFavoritePaths() {
+  load({"one", "two"});
+  QAbstractItemModel *model = view.model();
+  const int heart_column = model->columnCount() - 1;
+
+  QCOMPARE(model->index(0, heart_column).data(PlaylistUi::Model::FavoriteRole).toBool(), false);
+
+  controller->setFavoritePaths({"/music/two.mp3"});
+
+  QCOMPARE(model->index(0, heart_column).data(PlaylistUi::Model::FavoriteRole).toBool(), false);
+  QCOMPARE(model->index(1, heart_column).data(PlaylistUi::Model::FavoriteRole).toBool(), true);
+  // The heart must not move the configured columns around.
+  QCOMPARE(model->index(1, 3).data().toString(), QString("two"));
+}
+
+void TestPlaylistTracks::clickingTheHeartColumnEmitsFavoriteToggled() {
+  load({"one", "two"});
+  QSignalSpy spy(controller.get(), &PlaylistUi::Controller::favoriteToggled);
+  const int heart_column = view.model()->columnCount() - 1;
+  const QRect cell = view.visualRect(view.model()->index(1, heart_column));
+
+  QTest::mouseClick(view.viewport(), Qt::LeftButton, Qt::NoModifier, cell.center());
+
+  QCOMPARE(spy.count(), 1);
+  QCOMPARE(spy.first().first().value<Track>().path(), QString("/music/two.mp3"));
 }
 
 void TestPlaylistTracks::selectTrackCentersTheGivenPath() {

@@ -45,6 +45,8 @@ namespace {
       case Icons::Icon::Spinner:      return QStringLiteral(":/icons/ui/spinner.svg");
       case Icons::Icon::Radio:        return QStringLiteral(":/icons/ui/radio.svg");
       case Icons::Icon::DynamicRange: return QStringLiteral(":/icons/ui/dynamic-range.svg");
+      case Icons::Icon::Heart:        return QStringLiteral(":/icons/ui/heart.svg");
+      case Icons::Icon::HeartFilled:  return QStringLiteral(":/icons/ui/heart-fill.svg");
     }
     return QString();
   }

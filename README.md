@@ -18,11 +18,15 @@
 >
 > 判据保守：真实 Unicode、纯 ASCII，以及 `Céline Dion`、`Mötley Crüe` 这类真正的 Latin-1 名字不会被动。
 >
-> **2. 播放列表搜索**：轨道列表上方新增搜索框（原来的底部 filter 移上来并加强），按标题/艺术家/专辑/文件名过滤，右侧显示 `12 of 3450` 命中数；回车跳到第一条命中，Esc 清空，`Cmd/Ctrl+F` 聚焦。勾选 `All playlists` 后，搜索框下方会弹出**跨全部播放列表**的命中列表（每条标注所属列表），方向键选择、回车/点击直接跳过去并选中该曲。
+> **2. 收藏（我喜欢的音乐）**：曲目列表最右侧一列可以点心形收藏，收藏的曲目自动进一个专门的“我喜欢的音乐”播放列表（首次收藏时自动创建，不可重命名/删除，随播放列表一起持久化），`Cmd/Ctrl+Shift+F` 可切换所选曲目的收藏状态。
+
+**3. 简体中文界面**：完整翻译了界面（530 条），在 设置 → 界面 → 语言 里选 `Chinese (Simplified)` 即可；系统语言是中文时自动生效。
+
+**4. 播放列表搜索**：轨道列表上方新增搜索框（原来的底部 filter 移上来并加强），按标题/艺术家/专辑/文件名过滤，右侧显示 `12 of 3450` 命中数；回车跳到第一条命中，Esc 清空，`Cmd/Ctrl+F` 聚焦。勾选 `All playlists` 后，搜索框下方会弹出**跨全部播放列表**的命中列表（每条标注所属列表），方向键选择、回车/点击直接跳过去并选中该曲。
 >
 > 其余代码与上游一致，上游合并后可丢弃本 fork。
 >
-> Two changes on top of upstream v2.1.9: legacy tag encoding repair (GBK/GB18030 and UTF-8-in-Latin-1 metadata is decoded instead of displayed as mojibake, when reading tags and when restoring saved playlists), and a playlist search field above the track list with a match counter, Enter to jump to the first hit, Esc to clear and Ctrl/Cmd+F to focus, plus an `All playlists` checkbox that pops up hits from every playlist and jumps to them.
+> Changes on top of upstream v2.1.9: legacy tag encoding repair (GBK/GB18030 and UTF-8-in-Latin-1 metadata is decoded instead of displayed as mojibake, when reading tags and when restoring saved playlists), a playlist search field above the track list with a match counter (Enter jumps to the first hit, Esc clears, Ctrl/Cmd+F focuses) plus an `All playlists` checkbox that pops up hits from every playlist, Favorites with a heart column and a dedicated playlist, and a full Simplified Chinese translation.
 
 ![image](https://raw.githubusercontent.com/olegantonyan/mpz/gh-pages/images/mpz-workflow.apng)
 

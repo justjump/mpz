@@ -50,6 +50,7 @@ namespace {
     {"ja", "Japanese"},
     {"ru", "Russian"},
     {"sr", "Serbian"},
+    {"zh_CN", "Chinese (Simplified)"},
   };
 
   const QStringList kColumnFields = {

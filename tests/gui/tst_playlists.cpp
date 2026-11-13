@@ -38,6 +38,8 @@ private slots:
   void reloadFromFilesystemRefreshesAndPersists();
   void m3uExportListsTheTrackPaths();
   void searchTracksFindsMatchesAcrossPlaylists();
+  void favoritesPlaylistIsCreatedAndToggled();
+  void favoritesSurviveARestart();
 
 private:
   GuiTest::ConfigDir config;
@@ -223,6 +225,39 @@ void TestPlaylists::searchTracksFindsMatchesAcrossPlaylists() {
   QCOMPARE(playlists->searchTracks("Dogs", 1).size(), 1);
   QVERIFY(playlists->searchTracks("nothing here", 10).isEmpty());
   QVERIFY(playlists->searchTracks("", 10).isEmpty());
+}
+
+void TestPlaylists::favoritesPlaylistIsCreatedAndToggled() {
+  playlists->setFavorite(GuiTest::track("Dogs"), true);
+
+  auto favorites = playlists->favoritesPlaylist();
+  QVERIFY(favorites != nullptr);
+  QVERIFY(favorites->favorites());
+  QCOMPARE(favorites->tracks().size(), 1);
+  QVERIFY(playlists->isFavorite("/music/Dogs.mp3"));
+  QCOMPARE(playlists->favoritePaths(), QSet<QString>({"/music/Dogs.mp3"}));
+
+  // Adding the same track twice must not duplicate it.
+  playlists->setFavorite(GuiTest::track("Dogs"), true);
+  QCOMPARE(favorites->tracks().size(), 1);
+
+  playlists->toggleFavorite(GuiTest::track("Dogs"));
+  QVERIFY(!playlists->isFavorite("/music/Dogs.mp3"));
+  QCOMPARE(favorites->tracks().size(), 0);
+}
+
+void TestPlaylists::favoritesSurviveARestart() {
+  playlists->setFavorite(GuiTest::track("Dogs"), true);
+  playlists->setFavorite(GuiTest::track("Schism"), true);
+  local->sync();
+
+  build();
+
+  QVERIFY(playlists->isFavorite("/music/Dogs.mp3"));
+  QVERIFY(playlists->isFavorite("/music/Schism.mp3"));
+  auto favorites = playlists->favoritesPlaylist();
+  QVERIFY(favorites != nullptr);
+  QCOMPARE(favorites->name(), QString("Favorites"));
 }
 
 void TestPlaylists::m3uExportListsTheTrackPaths() {

@@ -89,6 +89,7 @@ namespace Config {
 
       auto order = map.value("playback_order_override").get<int>();
       playlist->setRandom(static_cast<Playlist::Playlist::PlaylistRandom>(order));
+      playlist->setFavorites(map.value("favorites").get<bool>());
 
       QVector<Track> tracks;
       for (const auto &t : map.value("tracks").get<QList<Config::Value> >()) {
@@ -112,6 +113,9 @@ namespace Config {
       }
       mp.insert("tracks", tl);
       mp.insert("playback_order_override", static_cast<int>(i->random()));
+      if (i->favorites()) {
+        mp.insert("favorites", Config::Value(true));
+      }
 
       plist << Config::Value(mp);
     }

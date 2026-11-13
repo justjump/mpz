@@ -32,6 +32,12 @@ namespace Playlist {
 
     quint64 uid() const;
 
+    // The Favorites playlist is maintained by the app, not by the user: it is
+    // created on the first favorite, cannot be renamed or removed, and the
+    // heart state of every track is derived from its contents.
+    bool favorites() const;
+    void setFavorites(bool value);
+
     bool hasTrack(quint64 track_uid) const;
     int trackIndex(quint64 track_uid) const;
     Track trackBy(quint64 uid) const;
@@ -55,6 +61,7 @@ namespace Playlist {
     QVector<Track> tracks_list;
     quint64 _uid;
     enum PlaylistRandom _random;
+    bool _favorites = false;
     mutable QMutex mutex;
   };
 }
