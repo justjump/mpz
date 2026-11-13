@@ -454,6 +454,23 @@ namespace PlaylistUi {
     return playlist == nullptr ? QVector<Track>() : playlist->tracks();
   }
 
+  void Controller::selectTrack(const QString &path) {
+    Model *model = proxy->activeModel();
+    for (int row = 0; row < model->rowCount(); ++row) {
+      if (model->trackAt(row).path() != path) {
+        continue;
+      }
+      const QModelIndex proxy_index = proxy->mapFromSource(model->index(row, 0));
+      if (!proxy_index.isValid()) {
+        return;
+      }
+      view->setFocus(Qt::ShortcutFocusReason);
+      view->selectionModel()->setCurrentIndex(proxy_index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      view->scrollTo(proxy_index, QAbstractItemView::PositionAtCenter);
+      return;
+    }
+  }
+
   QVector<Track> Controller::selectedTracks() const {
     QVector<Track> result;
     const auto rows = view->selectionModel()->selectedRows();

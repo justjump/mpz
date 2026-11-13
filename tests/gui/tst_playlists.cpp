@@ -37,6 +37,7 @@ private slots:
   void filteringHidesRowsAndDisablesDragging();
   void reloadFromFilesystemRefreshesAndPersists();
   void m3uExportListsTheTrackPaths();
+  void searchTracksFindsMatchesAcrossPlaylists();
 
 private:
   GuiTest::ConfigDir config;
@@ -205,6 +206,23 @@ void TestPlaylists::reloadFromFilesystemRefreshesAndPersists() {
   QCOMPARE(changed.count(), 1);
   QCOMPARE(playlists->currentPlaylist()->tracks().size(), 2);
   QCOMPARE(local->playlists().size(), 1);
+}
+
+void TestPlaylists::searchTracksFindsMatchesAcrossPlaylists() {
+  create("rock", {"Dogs", "Schism"});
+  create("pop", {"Dogs of War", "Halo"});
+
+  const auto hits = playlists->searchTracks("Dogs", 10);
+
+  QCOMPARE(hits.size(), 2);
+  QCOMPARE(hits.at(0).playlist->name(), QString("rock"));
+  QCOMPARE(hits.at(0).track.path(), QString("/music/Dogs.mp3"));
+  QCOMPARE(hits.at(1).playlist->name(), QString("pop"));
+  QCOMPARE(hits.at(1).track.path(), QString("/music/Dogs of War.mp3"));
+
+  QCOMPARE(playlists->searchTracks("Dogs", 1).size(), 1);
+  QVERIFY(playlists->searchTracks("nothing here", 10).isEmpty());
+  QVERIFY(playlists->searchTracks("", 10).isEmpty());
 }
 
 void TestPlaylists::m3uExportListsTheTrackPaths() {

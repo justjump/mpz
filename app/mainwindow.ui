@@ -191,7 +191,7 @@
       <widget class="QWidget" name="layoutWidget_2">
        <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1,0">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,0">
+         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,0,0">
           <item>
            <widget class="QLineEdit" name="tableViewSearch">
             <property name="toolTip">
@@ -202,6 +202,16 @@
             </property>
             <property name="clearButtonEnabled">
              <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="searchAllPlaylists">
+            <property name="toolTip">
+             <string>Search every playlist, including the ones that are not open</string>
+            </property>
+            <property name="text">
+             <string>All playlists</string>
             </property>
            </widget>
           </item>

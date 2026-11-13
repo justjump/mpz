@@ -52,6 +52,7 @@ private slots:
   void filterMatchesArtistAlbumTitleAndFilename();
   void searchReportsHowManyTracksMatch();
   void enterInSearchJumpsToTheFirstMatch();
+  void selectTrackCentersTheGivenPath();
   void escapeInSearchClearsTheFilter();
   void sortByReordersThePlaylist();
   void unloadClearsTheView();
@@ -222,6 +223,21 @@ void TestPlaylistTracks::enterInSearchJumpsToTheFirstMatch() {
   QVERIFY(view.selectionModel()->isRowSelected(0, QModelIndex()));
   // The term is kept, so pressing Enter again plays the highlight.
   QCOMPARE(search.text(), QStringLiteral("bbb"));
+}
+
+void TestPlaylistTracks::selectTrackCentersTheGivenPath() {
+  load({"one", "two", "three"});
+
+  controller->selectTrack("/music/two.mp3");
+
+  QCOMPARE(view.currentIndex().row(), 1);
+  QVERIFY(view.selectionModel()->isRowSelected(1, QModelIndex()));
+
+  // A track the active filter hides must not steal the cursor from the view.
+  search.setText("three");
+  const QModelIndex before = view.currentIndex();
+  controller->selectTrack("/music/one.mp3");
+  QCOMPARE(view.currentIndex(), before);
 }
 
 void TestPlaylistTracks::escapeInSearchClearsTheFilter() {

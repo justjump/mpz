@@ -3,6 +3,7 @@
 ### Added
 
 - Playlist search: the track filter moved above the track list and now shows how many tracks match (`12 of 3450`). Enter jumps to the first hit, Esc clears it and the term is kept after jumping, so Enter + Enter starts playing the match. Ctrl/Cmd+F focuses the field, matching title, artist, album and file name
+- Cross-playlist search: ticking `All playlists` lists the matches from every playlist in a popup under the field, labelled with the playlist they belong to. Arrow keys move through the hits, Enter or a click opens that playlist with the track selected
 
 ### Fixed
 

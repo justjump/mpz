@@ -91,6 +91,36 @@ namespace PlaylistsUi {
     return proxy->activeModel()->itemByTrack(track_uid);
   }
 
+  std::shared_ptr<Playlist::Playlist> Controller::playlistByUid(quint64 uid) const {
+    return proxy->activeModel()->itemBy(uid);
+  }
+
+  QVector<Controller::TrackSearchHit> Controller::searchTracks(const QString &term, int limit) const {
+    QVector<TrackSearchHit> hits;
+    const QString needle = term.trimmed();
+    if (needle.isEmpty() || limit <= 0) {
+      return hits;
+    }
+    for (const auto &pl : proxy->activeModel()->itemList()) {
+      if (pl == nullptr) {
+        continue;
+      }
+      for (const Track &t : pl->tracks()) {
+        if (!t.title().contains(needle, Qt::CaseInsensitive)
+            && !t.artist().contains(needle, Qt::CaseInsensitive)
+            && !t.album().contains(needle, Qt::CaseInsensitive)
+            && !t.filename().contains(needle, Qt::CaseInsensitive)) {
+          continue;
+        }
+        hits.append(TrackSearchHit{pl, t});
+        if (hits.size() >= limit) {
+          return hits;
+        }
+      }
+    }
+    return hits;
+  }
+
   std::shared_ptr<Playlist::Playlist> Controller::playlistByName(const QString &name) const {
     for (const auto &it : proxy->activeModel()->itemList()) {
       if (it->name() == name) {

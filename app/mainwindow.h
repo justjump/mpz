@@ -31,6 +31,7 @@
 
 #include <QAction>
 #include <QDockWidget>
+#include <QListWidget>
 #include <QMainWindow>
 #include <QMenu>
 #include <QPointer>
@@ -165,7 +166,13 @@ private:
   QMetaObject::Connection preload_conn;
   QTimer *preload_deadline = nullptr;
 
+  QListWidget *cross_search_results = nullptr;
+  bool eventFilter(QObject *obj, QEvent *event) override;
+
   int streamBuffer();
+  void setupCrossPlaylistSearch();
+  void updateCrossPlaylistSearch();
+  void activateCrossPlaylistResult(QListWidgetItem *item);
   void setupUiSettings();
   void setupOrderCombobox();
   void setupPerPlaylistOrderCombobox();

@@ -6,6 +6,8 @@
 #include "mainwindow.h"
 #include "playback/playbackcontroller.h"
 #include "playlists_ui/playlistscontroller.h"
+#include "playlists_ui/playlistsmodel.h"
+#include "playlists_ui/playlistsproxyfiltermodel.h"
 #include "shortcuts.h"
 #include "trayicon.h"
 
@@ -16,6 +18,7 @@
 #include <QToolBar>
 #include <QLineEdit>
 #include <QListView>
+#include <QListWidget>
 #include <QStatusBar>
 #include <QStyle>
 #include <QStyleOptionButton>
@@ -51,6 +54,7 @@ private slots:
   void windowTitleIsElidedForLongTracks();
   void streamBufferDefaultIsPersisted();
   void trayIconStaysOffWhenDisabled();
+  void crossPlaylistSearchListsHitsAndJumpsToThem();
 
 private:
   GuiTest::ConfigDir config;
@@ -234,6 +238,64 @@ void TestMainWindow::windowTitleIsElidedForLongTracks() {
 
 void TestMainWindow::streamBufferDefaultIsPersisted() {
   QCOMPARE(global->streamBufferSize(), 262144);
+}
+
+void TestMainWindow::crossPlaylistSearchListsHitsAndJumpsToThem() {
+  auto *playlists_view = window->findChild<QListView *>("listView");
+  auto *proxy = playlists_view == nullptr ? nullptr : qobject_cast<PlaylistsUi::ProxyFilterModel *>(playlists_view->model());
+  auto *model = proxy == nullptr ? nullptr : qobject_cast<PlaylistsUi::Model *>(proxy->sourceModel());
+  QVERIFY(playlists_view != nullptr);
+  QVERIFY(proxy != nullptr);
+  QVERIFY(model != nullptr);
+
+  auto playlistNamed = [model](const QString &name) -> std::shared_ptr<Playlist::Playlist> {
+    for (const auto &p : model->itemList()) {
+      if (p->name() == name) {
+        return p;
+      }
+    }
+    return nullptr;
+  };
+
+  model->createPlaylistFromTracks(GuiTest::tracks({"Dogs", "Schism"}), "rock");
+  QTRY_VERIFY(playlistNamed("rock") != nullptr);
+
+  auto *field = window->findChild<QLineEdit *>("tableViewSearch");
+  auto *all_playlists = window->findChild<QCheckBox *>("searchAllPlaylists");
+  auto *results = window->findChild<QListWidget *>("crossSearchResults");
+  QVERIFY(field != nullptr);
+  QVERIFY(all_playlists != nullptr);
+  QVERIFY(results != nullptr);
+  QVERIFY(!results->isVisible());
+
+  all_playlists->setChecked(true);
+  field->setText("Dogs");
+
+  QTRY_VERIFY(results->isVisible());
+  QCOMPARE(results->count(), 1);
+  QCOMPARE(results->item(0)->data(Qt::UserRole + 1).toString(), QString("/music/Dogs.mp3"));
+
+  // Unchecking puts the popup away again.
+  all_playlists->setChecked(false);
+  QVERIFY(!results->isVisible());
+
+  // Clicking a hit opens its playlist and leaves the track selected there.
+  all_playlists->setChecked(true);
+  QTRY_VERIFY(results->isVisible());
+  const QRect rect = results->visualItemRect(results->item(0));
+  QTest::mouseClick(results->viewport(), Qt::LeftButton, Qt::NoModifier, rect.center());
+
+  QTRY_VERIFY(playlists_view->currentIndex().isValid());
+  const auto opened = model->itemAt(proxy->mapToSource(playlists_view->currentIndex()));
+  QVERIFY(opened != nullptr);
+  QCOMPARE(opened->name(), QString("rock"));
+  QVERIFY(!results->isVisible());
+
+  // and the track itself is selected in the track list
+  auto *tracks_view = window->findChild<QTableView *>("tableView");
+  QVERIFY(tracks_view != nullptr);
+  QTRY_VERIFY(tracks_view->currentIndex().isValid());
+  QCOMPARE(tracks_view->currentIndex().siblingAtColumn(3).data().toString(), QString("Dogs"));
 }
 
 void TestMainWindow::trayIconStaysOffWhenDisabled() {

@@ -96,6 +96,8 @@ MainWindow::MainWindow(const QStringList &args, IPC::Instance *instance, Config:
     ui->tableViewSearchStatus->setText(tr("%1 of %2").arg(matched).arg(total));
   });
 
+  setupCrossPlaylistSearch();
+
   ui->toolButtonLibrarySort->setIcon(Icons::get(Icons::Icon::Sort));
   ui->toolButtonLibraries->setIcon(Icons::get(Icons::Icon::Settings));
   ui->toolButtonLibraries->setToolButtonStyle(Qt::ToolButtonIconOnly);
@@ -743,6 +745,118 @@ void MainWindow::setupCrashReporter() {
   });
 }
 #endif
+
+void MainWindow::setupCrossPlaylistSearch() {
+  cross_search_results = new QListWidget(this);
+  cross_search_results->setObjectName("crossSearchResults");
+  // The popup must never take focus, or typing would stop reaching the field.
+  cross_search_results->setFocusPolicy(Qt::NoFocus);
+  cross_search_results->setUniformItemSizes(true);
+  cross_search_results->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+  cross_search_results->setTextElideMode(Qt::ElideRight);
+  cross_search_results->setFrameShape(QFrame::StyledPanel);
+  cross_search_results->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+  cross_search_results->hide();
+
+  connect(cross_search_results, &QListWidget::itemClicked, this, &MainWindow::activateCrossPlaylistResult);
+  connect(cross_search_results, &QListWidget::itemActivated, this, &MainWindow::activateCrossPlaylistResult);
+  connect(ui->tableViewSearch, &QLineEdit::textChanged, this, [this]() { updateCrossPlaylistSearch(); });
+  connect(ui->searchAllPlaylists, &QCheckBox::toggled, this, [this](bool) { updateCrossPlaylistSearch(); });
+
+  // Installed after the playlist controller's own filter on purpose: the most
+  // recently installed filter runs first, so the popup gets the arrow keys
+  // before the field turns them into cursor movement.
+  ui->tableViewSearch->installEventFilter(this);
+}
+
+void MainWindow::updateCrossPlaylistSearch() {
+  if (cross_search_results == nullptr || playlists == nullptr) {
+    return;
+  }
+  const QString term = ui->tableViewSearch->text().trimmed();
+  if (!ui->searchAllPlaylists->isChecked() || term.isEmpty()) {
+    cross_search_results->hide();
+    return;
+  }
+
+  const QVector<PlaylistsUi::Controller::TrackSearchHit> hits = playlists->searchTracks(term, 200);
+  cross_search_results->clear();
+  for (const auto &hit : hits) {
+    QString label = hit.track.title().isEmpty() ? hit.track.filename() : hit.track.title();
+    if (!hit.track.artist().isEmpty()) {
+      label += QStringLiteral(" — ") + hit.track.artist();
+    }
+    label += QStringLiteral("   ·   ") + hit.playlist->name();
+    auto *item = new QListWidgetItem(label, cross_search_results);
+    item->setData(Qt::UserRole, static_cast<qulonglong>(hit.playlist->uid()));
+    item->setData(Qt::UserRole + 1, hit.track.path());
+  }
+  if (cross_search_results->count() == 0) {
+    cross_search_results->hide();
+    return;
+  }
+
+  cross_search_results->setCurrentRow(0);
+  const QPoint top_left = ui->tableViewSearch->mapTo(this, QPoint(0, ui->tableViewSearch->height() + 2));
+  const int width = qMax(ui->tableViewSearch->width(), 520);
+  const int row_height = qMax(cross_search_results->sizeHintForRow(0), 1);
+  const int height = qMin(320, row_height * cross_search_results->count() + 4);
+  cross_search_results->setGeometry(QRect(top_left, QSize(width, height)));
+  cross_search_results->raise();
+  cross_search_results->show();
+}
+
+void MainWindow::activateCrossPlaylistResult(QListWidgetItem *item) {
+  if (item == nullptr || playlists == nullptr || playlist == nullptr) {
+    return;
+  }
+  const quint64 playlist_uid = item->data(Qt::UserRole).toULongLong();
+  const QString path = item->data(Qt::UserRole + 1).toString();
+  cross_search_results->hide();
+
+  // A filtered playlist list would swallow the jump, and the user should see
+  // the playlist that was picked anyway.
+  if (!ui->listViewSearch->text().isEmpty()) {
+    ui->listViewSearch->clear();
+  }
+  if (const auto target = playlists->playlistByUid(playlist_uid)) {
+    playlists->on_jumpTo(target);
+    playlist->selectTrack(path);
+  }
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event) {
+  if (obj == ui->tableViewSearch && cross_search_results != nullptr && cross_search_results->isVisible()) {
+    if (event->type() == QEvent::KeyPress) {
+      auto *key_event = static_cast<QKeyEvent *>(event);
+      const int count = cross_search_results->count();
+      const int current = cross_search_results->currentRow();
+      switch (key_event->key()) {
+      case Qt::Key_Down:
+        cross_search_results->setCurrentRow(current + 1 < count ? current + 1 : 0);
+        return true;
+      case Qt::Key_Up:
+        cross_search_results->setCurrentRow(current > 0 ? current - 1 : count - 1);
+        return true;
+      case Qt::Key_Escape:
+        cross_search_results->hide();
+        return true;
+      case Qt::Key_Return:
+      case Qt::Key_Enter:
+        if (current >= 0) {
+          activateCrossPlaylistResult(cross_search_results->item(current));
+          return true;
+        }
+        break;
+      default:
+        break;
+      }
+    } else if (event->type() == QEvent::FocusOut) {
+      cross_search_results->hide();
+    }
+  }
+  return QMainWindow::eventFilter(obj, event);
+}
 
 void MainWindow::setupShortcuts() {
   shortcuts = new Shortcuts(global_conf, local_conf, this);

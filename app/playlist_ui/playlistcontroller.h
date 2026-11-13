@@ -29,6 +29,9 @@ namespace PlaylistUi {
 
     QVector<Track> currentTracks() const;
     QVector<Track> selectedTracks() const;
+    // Selects and centers the track with this file path, if the current filter
+    // still shows it. Used after jumping to a playlist from a global search.
+    void selectTrack(const QString &path);
 
   signals:
     void activated(const Track &track);

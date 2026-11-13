@@ -15,6 +15,7 @@
 #include <QPoint>
 #include <QDir>
 #include <QDropEvent>
+#include <QVector>
 #include <QModelIndex>
 #include <memory>
 #include <QLineEdit>
@@ -25,8 +26,17 @@ namespace PlaylistsUi {
     Q_OBJECT
 
   public:
+    struct TrackSearchHit {
+      std::shared_ptr<Playlist::Playlist> playlist;
+      Track track;
+    };
+
     explicit Controller(QListView *view, QLineEdit *search, Config::Local &conf, BackgroundTasks *_tasks, ModusOperandi &modus, QObject *parent = nullptr);
     std::shared_ptr<Playlist::Playlist> playlistByTrackUid(quint64 track_uid) const;
+    std::shared_ptr<Playlist::Playlist> playlistByUid(quint64 uid) const;
+    // Matches title, artist, album and file name in every playlist, in playlist
+    // order, stopping at limit results.
+    QVector<TrackSearchHit> searchTracks(const QString &term, int limit) const;
     std::shared_ptr<Playlist::Playlist> playlistByName(const QString &name) const;
     std::shared_ptr<Playlist::Playlist> currentPlaylist() const;
     int playlistsCount() const;
