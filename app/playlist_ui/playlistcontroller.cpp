@@ -373,20 +373,27 @@ namespace PlaylistUi {
 
   void Controller::eventFilterViewport(QEvent *event) {
     if (event->type() == QEvent::Resize) {
-      int total_width = view->width();
+      constexpr int heart_width = 26;
+      const int total_width = view->width();
+      // The percentages describe the configured columns; the heart is on top of
+      // them, so take its width out of the budget or the last column comes up
+      // short and the heart gets clipped.
+      const int usable_width = qMax(0, total_width - heart_width);
       view->horizontalHeader()->setMinimumSectionSize(20);
       view->setColumnWidth(0, 20);
 
       for (int col = 1; col <= columns_config.count(); col++) {
         auto rel_width = columns_config.width(col);
         if (rel_width > 0) {
-          view->setColumnWidth(col, static_cast<int>(total_width * rel_width));
+          view->setColumnWidth(col, static_cast<int>(usable_width * rel_width));
         }
         if (columns_config.stretch(col)) {
           view->horizontalHeader()->setSectionResizeMode(col, QHeaderView::Stretch);
         }
       }
-      view->setColumnWidth(columns_config.count() + 1, 26);
+      const int heart_column = columns_config.count() + 1;
+      view->horizontalHeader()->setSectionResizeMode(heart_column, QHeaderView::Fixed);
+      view->setColumnWidth(heart_column, heart_width);
 
     } else if (event->type() == QEvent::WindowActivate) {
       if (restore_scroll_once) {
