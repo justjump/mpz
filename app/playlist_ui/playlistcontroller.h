@@ -39,6 +39,8 @@ namespace PlaylistUi {
     void createPlaylistRequested(const QList<QDir> &filepaths, const QString &libraryDir);
     void createPlaylistFromTracksRequested(const QVector<Track> &tracks, const QString &name);
     void trackInfoRequested(const Track &track);
+    // Non-zero match count only while a search term is active.
+    void searchResultsChanged(int matched, int total);
 
   public slots:
     void on_load(const std::shared_ptr<Playlist::Playlist> pi);
@@ -57,6 +59,7 @@ namespace PlaylistUi {
 
   private slots:
     void removeSelectedTracks();
+    void updateSearchStatus();
     void on_appendAsyncFinished(std::shared_ptr<Playlist::Playlist> pl);
     void on_search(const QString &term);
     void on_currentSelectionChanged(const QModelIndex &index, const QModelIndex &prev);
@@ -82,6 +85,7 @@ namespace PlaylistUi {
     void updateStreamSpans();
     void restoreCursor(quint64 cursor_uid, int fallback_row);
     void eventFilterTableView(QEvent *event);
+    bool eventFilterSearch(QEvent *event);
     void eventFilterViewport(QEvent *event);
     bool handleDnd(QEvent *event);
     void onDrop(QDropEvent *event);

@@ -50,6 +50,9 @@ private slots:
   void rearrangeMovesAContiguousBlock();
   void deleteKeyRemovesTheSelectionAndRestoresTheCursor();
   void filterMatchesArtistAlbumTitleAndFilename();
+  void searchReportsHowManyTracksMatch();
+  void enterInSearchJumpsToTheFirstMatch();
+  void escapeInSearchClearsTheFilter();
   void sortByReordersThePlaylist();
   void unloadClearsTheView();
   void editTagsSkipsStreamsAndOpensForTheRest();
@@ -76,6 +79,9 @@ void TestPlaylistTracks::initTestCase() {
 }
 
 void TestPlaylistTracks::init() {
+  // The search field outlives the controller, so a term from the previous test
+  // would survive into the next one.
+  search.clear();
   global = std::make_unique<Config::Global>();
   local = std::make_unique<Config::Local>();
   modus = std::make_unique<ModusOperandi>(*local, &banner);
@@ -183,6 +189,49 @@ void TestPlaylistTracks::filterMatchesArtistAlbumTitleAndFilename() {
   QCOMPARE(shownTitles(), QStringList({"Dogs"}));
 
   search.clear();
+  QCOMPARE(view.model()->rowCount(), 2);
+}
+
+void TestPlaylistTracks::searchReportsHowManyTracksMatch() {
+  playlist->load({GuiTest::track("Dogs", "Animals", "Pink Floyd"),
+                  GuiTest::track("Schism", "Lateralus", "Tool"),
+                  GuiTest::track("Toolbox", "Toolbox", "Tool")});
+  controller->on_load(playlist);
+  QSignalSpy spy(controller.get(), &PlaylistUi::Controller::searchResultsChanged);
+
+  search.setText("Tool");
+
+  QVERIFY(!spy.isEmpty());
+  QCOMPARE(spy.last().at(0).toInt(), 2);
+  QCOMPARE(spy.last().at(1).toInt(), 3);
+
+  // Rows appearing while a term is active update the count too.
+  controller->on_appendTracks({GuiTest::track("Toolbox 2", "Toolbox", "Tool")});
+  QCOMPARE(spy.last().at(0).toInt(), 3);
+  QCOMPARE(spy.last().at(1).toInt(), 4);
+}
+
+void TestPlaylistTracks::enterInSearchJumpsToTheFirstMatch() {
+  load({"aaa", "bbb", "ccc"});
+  search.setText("bbb");
+  QCOMPARE(view.model()->rowCount(), 1);
+
+  QTest::keyClick(&search, Qt::Key_Return);
+
+  QCOMPARE(view.currentIndex().row(), 0);
+  QVERIFY(view.selectionModel()->isRowSelected(0, QModelIndex()));
+  // The term is kept, so pressing Enter again plays the highlight.
+  QCOMPARE(search.text(), QStringLiteral("bbb"));
+}
+
+void TestPlaylistTracks::escapeInSearchClearsTheFilter() {
+  load({"aaa", "bbb"});
+  search.setText("bbb");
+  QCOMPARE(view.model()->rowCount(), 1);
+
+  QTest::keyClick(&search, Qt::Key_Escape);
+
+  QVERIFY(search.text().isEmpty());
   QCOMPARE(view.model()->rowCount(), 2);
 }
 

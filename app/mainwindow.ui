@@ -189,7 +189,37 @@
        </layout>
       </widget>
       <widget class="QWidget" name="layoutWidget_2">
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,1,0">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,0">
+          <item>
+           <widget class="QLineEdit" name="tableViewSearch">
+            <property name="toolTip">
+             <string>Search tracks by title, artist, album or file name (Ctrl/Cmd+F)</string>
+            </property>
+            <property name="placeholderText">
+             <string>Search tracks</string>
+            </property>
+            <property name="clearButtonEnabled">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="tableViewSearchStatus">
+            <property name="minimumSize">
+             <size>
+              <width>90</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item>
          <widget class="QTableView" name="tableView">
           <property name="mouseTracking">
@@ -202,13 +232,6 @@
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QLineEdit" name="tableViewSearch">
-            <property name="placeholderText">
-             <string>Filter tracks</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <widget class="QCheckBox" name="followCursorCheckBox">
             <property name="toolTip">

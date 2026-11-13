@@ -11,6 +11,7 @@
 #include "textelide.h"
 
 #include <QDebug>
+#include <QShortcut>
 #include <QApplication>
 #include <QStyle>
 #include <QEvent>
@@ -85,6 +86,15 @@ MainWindow::MainWindow(const QStringList &args, IPC::Instance *instance, Config:
   library = new DirectoryUi::Controller(ui->treeView, ui->treeViewSearch, ui->comboBoxLibraries, ui->toolButtonLibraries, ui->toolButtonLibrarySort, local_conf, global_conf, modus_operandi, this);
   playlists = new PlaylistsUi::Controller(ui->listView, ui->listViewSearch, local_conf, tasks, modus_operandi, this);
   playlist = new PlaylistUi::Controller(ui->tableView, ui->tableViewSearch, tasks, local_conf, global_conf, modus_operandi, this);
+
+  connect(playlist, &PlaylistUi::Controller::searchResultsChanged, this, [&](int matched, int total) {
+    // Only meaningful while a search is running; an empty box never filters.
+    if (ui->tableViewSearch->text().isEmpty()) {
+      ui->tableViewSearchStatus->clear();
+      return;
+    }
+    ui->tableViewSearchStatus->setText(tr("%1 of %2").arg(matched).arg(total));
+  });
 
   ui->toolButtonLibrarySort->setIcon(Icons::get(Icons::Icon::Sort));
   ui->toolButtonLibraries->setIcon(Icons::get(Icons::Icon::Settings));
@@ -755,6 +765,12 @@ void MainWindow::setupShortcuts() {
   });
   connect(shortcuts, &Shortcuts::focusFilterPlaylist, this, [=]() {
     ui->tableViewSearch->setFocus(Qt::ShortcutFocusReason);
+  });
+  // Ctrl/Cmd+F is what everyone reaches for; the configurable Alt+3 above stays.
+  auto *find_shortcut = new QShortcut(QKeySequence::Find, this);
+  connect(find_shortcut, &QShortcut::activated, this, [=]() {
+    ui->tableViewSearch->setFocus(Qt::ShortcutFocusReason);
+    ui->tableViewSearch->selectAll();
   });
 
   connect(shortcuts, &Shortcuts::play, this, [&]() {

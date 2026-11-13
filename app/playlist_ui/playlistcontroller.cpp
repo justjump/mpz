@@ -74,6 +74,13 @@ namespace PlaylistUi {
 
     connect(search, &QLineEdit::textChanged, this, &Controller::on_search);
     search->setClearButtonEnabled(true);
+    search->installEventFilter(this);
+
+    // The match counter has to follow the playlist too, not just the search
+    // term: rows arrive asynchronously and a filter stays active.
+    connect(proxy, &QAbstractItemModel::modelReset, this, &Controller::updateSearchStatus);
+    connect(proxy, &QAbstractItemModel::rowsInserted, this, &Controller::updateSearchStatus);
+    connect(proxy, &QAbstractItemModel::rowsRemoved, this, &Controller::updateSearchStatus);
 
     connect(view->verticalScrollBar(), &QScrollBar::valueChanged, this, [=](int val) {
       if (proxy->activeModel()->playlist() != nullptr) {
@@ -263,6 +270,10 @@ namespace PlaylistUi {
       eventFilterViewport(event);
     } else if (obj == view) {
       eventFilterTableView(event);
+    } else if (obj == search) {
+      if (eventFilterSearch(event)) {
+        return true;
+      }
     }
     return QObject::eventFilter(obj, event);
   }
@@ -392,6 +403,38 @@ namespace PlaylistUi {
         view->setDragEnabled(true);
       }
     }
+  }
+
+  bool Controller::eventFilterSearch(QEvent *event) {
+    if (event->type() != QEvent::KeyPress) {
+      return false;
+    }
+    auto *key_event = static_cast<QKeyEvent *>(event);
+    if (key_event->key() == Qt::Key_Escape) {
+      // Esc in an empty field is not ours to swallow: it may close a dialog.
+      if (search->text().isEmpty()) {
+        return false;
+      }
+      search->clear();
+      return true;
+    }
+    if (key_event->key() == Qt::Key_Return || key_event->key() == Qt::Key_Enter) {
+      if (proxy->rowCount() == 0) {
+        return false;
+      }
+      // Jump to the first hit, so Enter + Enter starts playing it.
+      const QModelIndex first = proxy->index(0, 0);
+      view->setFocus(Qt::ShortcutFocusReason);
+      view->selectionModel()->setCurrentIndex(first, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+      view->scrollTo(first, QAbstractItemView::PositionAtCenter);
+      return true;
+    }
+    return false;
+  }
+
+  void Controller::updateSearchStatus() {
+    const QAbstractItemModel *source = proxy->sourceModel();
+    emit searchResultsChanged(proxy->rowCount(), source != nullptr ? source->rowCount() : 0);
   }
 
   void Controller::on_search(const QString &term) {

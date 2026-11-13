@@ -8,15 +8,21 @@
 
 > **这是 olegantonyan/mpz 的 fork / This is a fork of [olegantonyan/mpz](https://github.com/olegantonyan/mpz).**
 >
-> 基于上游 v2.1.9，唯一改动是老标签的编码修复（中文歌曲最常见的乱码问题）：
+> 基于上游 v2.1.9，改动有两块：
+>
+> **1. 老标签的编码修复（中文歌曲最常见的乱码问题）**
 >
 > - ID3v1 里以 GBK/GB18030 写入的标题、艺术家、专辑，不再显示成 `ËÕ´òÂÌ` 这类乱码，读取时还原为正确中文（[`app/textdecode.cpp`](app/textdecode.cpp)）
 > - 以 UTF-8 写进 Latin-1 字段的标签（`HÃ©lÃ¨ne`）同样还原
 > - 已保存的播放列表缓存（`local.yml`）在加载时一并修复，下次保存写回正确文本
 >
-> 判据保守：真实 Unicode、纯 ASCII，以及 `Céline Dion`、`Mötley Crüe` 这类真正的 Latin-1 名字不会被动。其余代码与上游一致，上游合并后可丢弃本 fork。
+> 判据保守：真实 Unicode、纯 ASCII，以及 `Céline Dion`、`Mötley Crüe` 这类真正的 Latin-1 名字不会被动。
 >
-> The only change is legacy tag encoding repair: GBK/GB18030 and UTF-8-in-Latin-1 metadata is decoded instead of displayed as mojibake, both when reading tags and when restoring saved playlists. Everything else is upstream v2.1.9, unchanged.
+> **2. 播放列表搜索**：轨道列表上方新增搜索框（原来的底部 filter 移上来并加强），按标题/艺术家/专辑/文件名过滤，右侧显示 `12 of 3450` 命中数；回车跳到第一条命中，Esc 清空，`Cmd/Ctrl+F` 聚焦。
+>
+> 其余代码与上游一致，上游合并后可丢弃本 fork。
+>
+> Two changes on top of upstream v2.1.9: legacy tag encoding repair (GBK/GB18030 and UTF-8-in-Latin-1 metadata is decoded instead of displayed as mojibake, when reading tags and when restoring saved playlists), and a playlist search field above the track list with a match counter, Enter to jump to the first hit, Esc to clear and Ctrl/Cmd+F to focus.
 
 ![image](https://raw.githubusercontent.com/olegantonyan/mpz/gh-pages/images/mpz-workflow.apng)
 

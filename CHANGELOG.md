@@ -2,6 +2,8 @@
 
 ### Added
 
+- Playlist search: the track filter moved above the track list and now shows how many tracks match (`12 of 3450`). Enter jumps to the first hit, Esc clears it and the term is kept after jumping, so Enter + Enter starts playing the match. Ctrl/Cmd+F focuses the field, matching title, artist, album and file name
+
 ### Fixed
 
 - Tags written as GBK/GB18030 (typical for ID3v1 tags from Chinese rippers) no longer show up as mojibake such as "ËÕ´òÂÌ"; the legacy bytes are detected and decoded, in the playlist, the tag editor, the track info dialog and embedded lyrics. UTF-8 written into a Latin-1 field is repaired the same way
