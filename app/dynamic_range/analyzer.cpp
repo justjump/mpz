@@ -3,6 +3,7 @@
 #include "decode/nativeformat.h"
 
 #include <QAudioBuffer>
+#include <QTimer>
 #include <QFileInfo>
 #include <QUrl>
 
@@ -124,10 +125,17 @@ namespace DynamicRange {
     if (decoder == nullptr) {
       return;
     }
-    decoder->disconnect(this);
-    decoder->stop();
-    decoder->deleteLater();
+    QAudioDecoder *released = decoder;
     decoder = nullptr;
+    released->disconnect(this);
+    released->stop();
+    // Qt's macOS backend runs its reader on a private queue that outlives
+    // stop(). Deleting the decoder immediately frees that queue while the
+    // block still dispatches to it, which crashes in dispatch_async (SIGSEGV at
+    // 0x54, see crash.log). Unparent it so tearing the analyzer down cannot
+    // delete it either, and let it go once the block has drained.
+    released->setParent(nullptr);
+    QTimer::singleShot(500, released, [released]() { released->deleteLater(); });
   }
 
   void Analyzer::abortJob() {

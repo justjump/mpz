@@ -9,6 +9,7 @@
 
 ### Fixed
 
+- Dynamic range scans no longer crash when one is cancelled or aborted early. Qt's macOS audio decoder keeps its reader running on a private queue after `stop()`, so destroying the decoder right away freed that queue under the reader and died in `dispatch_async` (SIGSEGV at 0x54). Released decoders are now unparented and deleted half a second later
 - Tags written as GBK/GB18030 (typical for ID3v1 tags from Chinese rippers) no longer show up as mojibake such as "ËÕ´òÂÌ"; the legacy bytes are detected and decoded, in the playlist, the tag editor, the track info dialog and embedded lyrics. UTF-8 written into a Latin-1 field is repaired the same way
 
 ### Misc
