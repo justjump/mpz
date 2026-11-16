@@ -477,6 +477,26 @@ namespace PlaylistUi {
     proxy->activeModel()->setFavoritePaths(paths);
   }
 
+  void Controller::selectTracks(const QSet<QString> &paths) {
+    if (paths.isEmpty() || view->selectionModel() == nullptr) {
+      return;
+    }
+    QItemSelection selection;
+    for (int row = 0; row < proxy->rowCount(); ++row) {
+      const int source_row = proxy->mapToSource(proxy->index(row, 0)).row();
+      if (!paths.contains(proxy->activeModel()->trackAt(source_row).path())) {
+        continue;
+      }
+      selection.select(proxy->index(row, 0), proxy->index(row, proxy->columnCount() - 1));
+    }
+    if (selection.isEmpty()) {
+      return;
+    }
+    view->selectionModel()->select(selection, QItemSelectionModel::ClearAndSelect);
+    view->selectionModel()->setCurrentIndex(selection.indexes().first(), QItemSelectionModel::NoUpdate);
+    view->setFocus(Qt::OtherFocusReason);
+  }
+
   void Controller::selectTrack(const QString &path) {
     Model *model = proxy->activeModel();
     for (int row = 0; row < model->rowCount(); ++row) {

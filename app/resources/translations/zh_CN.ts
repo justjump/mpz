@@ -950,15 +950,35 @@
             <source>Delete Permanently</source>
             <translation>彻底删除</translation>
         </message>
+        <message>
+            <source>the folder is not available</source>
+            <translation>所在文件夹不可用</translation>
+        </message>
+        <message>
+            <source>the system refused it</source>
+            <translation>系统拒绝删除</translation>
+        </message>
+        <message>
+            <source>no write permission</source>
+            <translation>没有写权限</translation>
+        </message>
         <message numerus="yes">
             <source>Deleted %n file(s)</source>
             <translation>
                 <numerusform>已删除 %n 个文件</numerusform>
             </translation>
         </message>
-        <message>
-            <source>Deleted %1, failed %2</source>
-            <translation>已删除 %1 个，失败 %2 个</translation>
+        <message numerus="yes">
+            <source>%n missing entry/entries cleaned up</source>
+            <translation>
+                <numerusform>清理了 %n 条失效记录</numerusform>
+            </translation>
+        </message>
+        <message numerus="yes">
+            <source>%n kept in the playlist</source>
+            <translation>
+                <numerusform>%n 个仍保留在列表里</numerusform>
+            </translation>
         </message>
         <message>
             <source>ReplayGain scan</source>

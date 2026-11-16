@@ -2,7 +2,7 @@
 
 ### Added
 
-- Playlist context menu: `Delete files from disk…` removes the audio files themselves instead of just the playlist entries. It asks first (move to Trash or delete permanently), stops playback when the playing track is one of them, and drops the tracks from every playlist, Favorites included. Cue sheet entries are excluded, since their file holds the whole album
+- Playlist context menu: `Delete files from disk…` removes the audio files themselves instead of just the playlist entries. It asks first (move to Trash or delete permanently), stops playback when the playing track is one of them, and drops the tracks from every playlist, Favorites included. Cue sheet entries are excluded, since their file holds the whole album. Files that cannot be deleted stay in the playlist and selected so the delete can be retried; entries whose file is already missing are cleaned up instead
 - Favorites: a heart column at the end of the track list toggles a track in a dedicated "Favorites" playlist, which is created on the first heart, persists like any other playlist and cannot be renamed or removed. Hearts are visible from every playlist, and `Ctrl/Cmd+Shift+F` toggles the selected tracks. The column shows a muted outline for the rest of the library so it stays discoverable
 - Simplified Chinese interface (`zh_CN`), selectable in Settings → Interface → Language and picked up automatically when the system locale is Chinese
 - Playlist search: the track filter moved above the track list and now shows how many tracks match (`12 of 3450`). Enter jumps to the first hit, Esc clears it and the term is kept after jumping, so Enter + Enter starts playing the match. Ctrl/Cmd+F focuses the field, matching title, artist, album and file name

@@ -34,6 +34,9 @@ namespace PlaylistUi {
     void selectTrack(const QString &path);
     // Heart state shown in the last column, owned by the Favorites playlist.
     void setFavoritePaths(const QSet<QString> &paths);
+    // Selects every visible row whose file path is in paths. Used to keep the
+    // tracks whose file could not be deleted selected for a retry.
+    void selectTracks(const QSet<QString> &paths);
 
   signals:
     void activated(const Track &track);

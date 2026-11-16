@@ -59,6 +59,7 @@ private slots:
   void crossPlaylistSearchListsHitsAndJumpsToThem();
   void heartClickAddsTheTrackToFavorites();
   void deleteFilesDialogRemovesTheFileFromDisk();
+  void failedDeletesStayInThePlaylist();
 
 private:
   GuiTest::ConfigDir config;
@@ -371,6 +372,99 @@ void TestMainWindow::deleteFilesDialogRemovesTheFileFromDisk() {
 
   QVERIFY(!QFile::exists(path));
   QVERIFY(!QDir().exists(path));
+}
+
+void TestMainWindow::failedDeletesStayInThePlaylist() {
+  // Earlier tests leave a search term in the track filter; a filtered view
+  // would hide the playlist we are about to open.
+  if (auto *search = window->findChild<QLineEdit *>("tableViewSearch")) {
+    search->clear();
+  }
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const QString deletable = dir.path() + "/goes-away.mp3";
+  const QString locked_dir = dir.path() + "/locked";
+  QVERIFY(QDir().mkpath(locked_dir));
+  const QString undeletable = locked_dir + "/stays.mp3";
+  for (const QString &path : {deletable, undeletable}) {
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write("x");
+  }
+  // Removing a file needs write permission on its directory.
+  QVERIFY(QFile::setPermissions(locked_dir, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+
+  auto *playlists_view = window->findChild<QListView *>("listView");
+  auto *proxy = qobject_cast<PlaylistsUi::ProxyFilterModel *>(playlists_view->model());
+  auto *model = qobject_cast<PlaylistsUi::Model *>(proxy->sourceModel());
+  QVERIFY(model != nullptr);
+
+  auto playlistNamed = [model](const QString &name) -> std::shared_ptr<Playlist::Playlist> {
+    for (const auto &p : model->itemList()) {
+      if (p->name() == name) {
+        return p;
+      }
+    }
+    return nullptr;
+  };
+
+  const QString missing = dir.path() + "/already-gone.mp3";
+  const Track deleted_track(deletable, 0, "a", "b", "goes away", 1, 2000, 1000, 2, 320, 44100);
+  const Track kept_track(undeletable, 0, "a", "b", "stays", 1, 2000, 1000, 2, 320, 44100);
+  const Track missing_track(missing, 0, "a", "b", "already gone", 1, 2000, 1000, 2, 320, 44100);
+  model->createPlaylistFromTracks({deleted_track, kept_track, missing_track}, "deltest");
+  QTRY_VERIFY(playlistNamed("deltest") != nullptr);
+
+  // open it in the track list
+  for (int i = 0; i < model->rowCount(); ++i) {
+    const auto pl = model->itemAt(model->index(i, 0));
+    if (pl != nullptr && pl->name() == "deltest") {
+      const QModelIndex index = proxy->index(i, 0);
+      playlists_view->scrollTo(index, QAbstractItemView::PositionAtCenter);
+      QTest::qWait(50);
+      const QRect rect = playlists_view->visualRect(index);
+      QVERIFY(rect.isValid());
+      QTest::mouseClick(playlists_view->viewport(), Qt::LeftButton, Qt::NoModifier, rect.center());
+      break;
+    }
+  }
+  auto *tracks_view = window->findChild<QTableView *>("tableView");
+  QTRY_COMPARE(tracks_view->model()->rowCount(), 3);
+
+  // answer the confirmation with "delete permanently", then close the warning
+  QTimer answer;
+  answer.setInterval(50);
+  QObject::connect(&answer, &QTimer::timeout, []() {
+    for (QWidget *widget : QApplication::topLevelWidgets()) {
+      auto *box = qobject_cast<QMessageBox *>(widget);
+      if (box == nullptr) {
+        continue;
+      }
+      const bool confirm = box->windowTitle() == "Delete files";
+      for (auto *button : box->buttons()) {
+        if (confirm && button->text().contains("Delete Permanently")) {
+          button->click();
+          return;
+        }
+        if (!confirm && box->buttonRole(button) == QMessageBox::AcceptRole) {
+          button->click();
+          return;
+        }
+      }
+    }
+  });
+  answer.start();
+  window->onDeleteFilesRequested({deleted_track, kept_track, missing_track});
+  answer.stop();
+
+  QVERIFY(!QFile::exists(deletable));
+  QVERIFY(QFile::exists(undeletable));
+  // The undeletable track stays, the missing one is cleaned up.
+  QCOMPARE(playlistNamed("deltest")->tracks().size(), 1);
+  QCOMPARE(playlistNamed("deltest")->tracks().first().title(), QString("stays"));
+  QCOMPARE(tracks_view->model()->rowCount(), 1);
+
+  QFile::setPermissions(locked_dir, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
 }
 
 void TestMainWindow::trayIconStaysOffWhenDisabled() {

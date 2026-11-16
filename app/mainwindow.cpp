@@ -805,26 +805,76 @@ void MainWindow::onDeleteFilesRequested(const QVector<Track> &tracks) {
     player->stop();
   }
 
-  QStringList failed;
+  QStringList removed_paths;
+  QSet<QString> kept_paths;
+  int deleted = 0;
+  int cleaned = 0;
+  QStringList reasons;
+
   for (const QString &path : std::as_const(paths)) {
-    const bool ok = permanent ? QFile::remove(path) : QFile::moveToTrash(path);
-    if (!ok) {
-      failed << QFileInfo(path).fileName();
+    const QFileInfo info(path);
+    if (!info.exists()) {
+      // An entry whose file is already gone only needs its playlist record
+      // dropped. If the folder itself is missing the volume may just be
+      // unmounted, so keep the entry instead of silently losing it.
+      if (QFileInfo(info.absolutePath()).isDir()) {
+        ++cleaned;
+        removed_paths << path;
+      } else {
+        kept_paths.insert(path);
+        reasons << tr("the folder is not available");
+      }
+      continue;
     }
+
+    const bool ok = permanent ? QFile(path).remove() : QFile::moveToTrash(path);
+    if (ok) {
+      ++deleted;
+      removed_paths << path;
+      continue;
+    }
+
+    kept_paths.insert(path);
+    const QString reason = info.isWritable() ? tr("the system refused it") : tr("no write permission");
+    qWarning() << "could not delete" << path << ":" << reason;
+    reasons << reason;
   }
 
-  QSet<QString> deleted_paths;
-  for (const QString &path : std::as_const(paths)) {
-    deleted_paths.insert(path);
+  // Only entries whose file is really gone (or missing) may leave the
+  // playlists. A failed delete has to stay visible, or the entry is gone and the
+  // file is not, with no way left to try again.
+  QSet<QString> forgotten;
+  for (const QString &path : std::as_const(removed_paths)) {
+    forgotten.insert(path);
   }
-  playlists->forgetTracks(deleted_paths);
+  playlists->forgetTracks(forgotten);
 
-  const int deleted = paths.size() - failed.size();
-  if (failed.isEmpty()) {
-    banner->showMessage(tr("Deleted %n file(s)", "", deleted), SlidingBanner::Success, 4000);
-  } else {
-    banner->showMessage(tr("Deleted %1, failed %2").arg(deleted).arg(failed.size()), SlidingBanner::Error);
+  QStringList parts;
+  if (deleted > 0) {
+    parts << tr("Deleted %n file(s)", "", deleted);
   }
+  if (cleaned > 0) {
+    parts << tr("%n missing entry/entries cleaned up", "", cleaned);
+  }
+  if (kept_paths.isEmpty()) {
+    if (!parts.isEmpty()) {
+      banner->showMessage(parts.join(QStringLiteral("，")), SlidingBanner::Success, 5000);
+    }
+    return;
+  }
+
+  reasons.removeDuplicates();
+  QString message = parts.join(QStringLiteral("，"));
+  if (!message.isEmpty()) {
+    message += QStringLiteral("；");
+  }
+  message += tr("%n kept in the playlist", "", kept_paths.size());
+  if (reasons.size() == 1) {
+    message += QStringLiteral(" — ") + reasons.first();
+  }
+  banner->showMessage(message, SlidingBanner::Error, 9000);
+  qWarning() << "delete finished:" << deleted << "deleted," << cleaned << "cleaned," << kept_paths.size() << "kept";
+  playlist->selectTracks(kept_paths);
 }
 
 void MainWindow::setupCrossPlaylistSearch() {
