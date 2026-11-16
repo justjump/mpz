@@ -40,6 +40,7 @@ private slots:
   void searchTracksFindsMatchesAcrossPlaylists();
   void favoritesPlaylistIsCreatedAndToggled();
   void favoritesSurviveARestart();
+  void forgetTracksDropsTheFilesFromEveryPlaylist();
 
 private:
   GuiTest::ConfigDir config;
@@ -258,6 +259,26 @@ void TestPlaylists::favoritesSurviveARestart() {
   auto favorites = playlists->favoritesPlaylist();
   QVERIFY(favorites != nullptr);
   QCOMPARE(favorites->name(), QString("Favorites"));
+}
+
+void TestPlaylists::forgetTracksDropsTheFilesFromEveryPlaylist() {
+  create("rock", {"Dogs", "Schism"});
+  create("pop", {"Dogs", "Halo"});
+  playlists->setFavorite(GuiTest::track("Dogs"), true);
+
+  QSignalSpy forgotten(playlists.get(), &PlaylistsUi::Controller::tracksForgotten);
+  playlists->forgetTracks({"/music/Dogs.mp3"});
+
+  QCOMPARE(forgotten.count(), 1);
+  QCOMPARE(playlists->playlistByName("rock")->tracks().size(), 1);
+  QCOMPARE(playlists->playlistByName("pop")->tracks().size(), 1);
+  QVERIFY(!playlists->isFavorite("/music/Dogs.mp3"));
+
+  // and the change is persisted, not just in memory
+  local->sync();
+  build();
+  QCOMPARE(playlists->playlistByName("rock")->tracks().size(), 1);
+  QCOMPARE(playlists->playlistByName("pop")->tracks().first().title(), QString("Halo"));
 }
 
 void TestPlaylists::m3uExportListsTheTrackPaths() {

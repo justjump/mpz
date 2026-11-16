@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='utf-8'?>
-<TS version="2.1">
+<TS version="2.1" language="zh_CN">
     <context>
         <name>AboutDialog</name>
         <message>
@@ -922,6 +922,44 @@
             <source>Update available:</source>
             <translation>有可用更新：</translation>
         </message>
+        <message numerus="yes">
+            <source>… and %n more</source>
+            <translation>
+                <numerusform>… 还有 %n 个</numerusform>
+            </translation>
+        </message>
+        <message numerus="yes">
+            <source>Delete %n file(s) from disk?</source>
+            <translation>
+                <numerusform>要从磁盘删除 %n 个文件吗？</numerusform>
+            </translation>
+        </message>
+        <message>
+            <source>This cannot be undone. The tracks are removed from every playlist.</source>
+            <translation>此操作不可撤销，这些曲目会从所有播放列表中移除。</translation>
+        </message>
+        <message>
+            <source>Delete files</source>
+            <translation>删除文件</translation>
+        </message>
+        <message>
+            <source>Move to Trash</source>
+            <translation>移到废纸篓</translation>
+        </message>
+        <message>
+            <source>Delete Permanently</source>
+            <translation>彻底删除</translation>
+        </message>
+        <message numerus="yes">
+            <source>Deleted %n file(s)</source>
+            <translation>
+                <numerusform>已删除 %n 个文件</numerusform>
+            </translation>
+        </message>
+        <message>
+            <source>Deleted %1, failed %2</source>
+            <translation>已删除 %1 个，失败 %2 个</translation>
+        </message>
         <message>
             <source>ReplayGain scan</source>
             <translation>ReplayGain 扫描</translation>
@@ -988,6 +1026,10 @@
     </context>
     <context>
         <name>PlaylistUi::PlaylistContextMenu</name>
+        <message>
+            <source>Delete files from disk…</source>
+            <translation>删除文件…</translation>
+        </message>
         <message>
             <source>Remove</source>
             <translation>移除</translation>

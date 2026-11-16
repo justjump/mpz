@@ -11,6 +11,9 @@
 #include "textelide.h"
 
 #include <QDebug>
+#include <QFileInfo>
+#include <QMessageBox>
+#include <QSet>
 #include <QShortcut>
 #include <QApplication>
 #include <QStyle>
@@ -136,6 +139,12 @@ MainWindow::MainWindow(const QStringList &args, IPC::Instance *instance, Config:
   connect(playlists, &PlaylistsUi::Controller::tracksAppended, playlist, &PlaylistUi::Controller::on_tracksAppended);
   connect(playlist, &PlaylistUi::Controller::favoriteToggled, this, [this](const Track &t) {
     playlists->toggleFavorite(t);
+  });
+  connect(playlist, &PlaylistUi::Controller::deleteFilesRequested, this, &MainWindow::onDeleteFilesRequested);
+  connect(playlists, &PlaylistsUi::Controller::tracksForgotten, this, [this]() {
+    if (const auto current = playlists->currentPlaylist()) {
+      playlist->on_load(current);
+    }
   });
   connect(playlists, &PlaylistsUi::Controller::favoritesChanged, this, [this]() {
     playlist->setFavoritePaths(playlists->favoritePaths());
@@ -754,6 +763,69 @@ void MainWindow::setupCrashReporter() {
   });
 }
 #endif
+
+void MainWindow::onDeleteFilesRequested(const QVector<Track> &tracks) {
+  QStringList paths;
+  QStringList names;
+  for (const Track &t : tracks) {
+    if (t.path().isEmpty() || t.isCue() || paths.contains(t.path())) {
+      continue;
+    }
+    paths << t.path();
+    names << QFileInfo(t.path()).fileName();
+  }
+  if (paths.isEmpty()) {
+    return;
+  }
+
+  QStringList preview = names.mid(0, 8);
+  if (names.size() > preview.size()) {
+    preview << tr("… and %n more", "", names.size() - preview.size());
+  }
+  QString text = tr("Delete %n file(s) from disk?", "", paths.size());
+  text += "\n\n" + preview.join('\n');
+  text += "\n\n" + tr("This cannot be undone. The tracks are removed from every playlist.");
+
+  QMessageBox box(this);
+  box.setIcon(QMessageBox::Warning);
+  box.setWindowTitle(tr("Delete files"));
+  box.setText(text);
+  auto *to_trash = box.addButton(tr("Move to Trash"), QMessageBox::AcceptRole);
+  auto *erase = box.addButton(tr("Delete Permanently"), QMessageBox::DestructiveRole);
+  box.addButton(QMessageBox::Cancel);
+  box.setDefaultButton(to_trash);
+  box.exec();
+  if (box.clickedButton() != to_trash && box.clickedButton() != erase) {
+    return;
+  }
+  const bool permanent = box.clickedButton() == erase;
+
+  // Never leave the player decoding a file that is about to disappear.
+  if (!player->isStopped() && paths.contains(player->currentTrack().path())) {
+    player->stop();
+  }
+
+  QStringList failed;
+  for (const QString &path : std::as_const(paths)) {
+    const bool ok = permanent ? QFile::remove(path) : QFile::moveToTrash(path);
+    if (!ok) {
+      failed << QFileInfo(path).fileName();
+    }
+  }
+
+  QSet<QString> deleted_paths;
+  for (const QString &path : std::as_const(paths)) {
+    deleted_paths.insert(path);
+  }
+  playlists->forgetTracks(deleted_paths);
+
+  const int deleted = paths.size() - failed.size();
+  if (failed.isEmpty()) {
+    banner->showMessage(tr("Deleted %n file(s)", "", deleted), SlidingBanner::Success, 4000);
+  } else {
+    banner->showMessage(tr("Deleted %1, failed %2").arg(deleted).arg(failed.size()), SlidingBanner::Error);
+  }
+}
 
 void MainWindow::setupCrossPlaylistSearch() {
   cross_search_results = new QListWidget(this);

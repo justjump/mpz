@@ -42,6 +42,9 @@ namespace PlaylistsUi {
     bool isFavorite(const QString &path) const;
     QSet<QString> favoritePaths() const;
     void setFavorite(const Track &track, bool favorite);
+    // Drops every track whose file path is in paths from all playlists
+    // (Favorites included) and persists. Used after files are deleted.
+    void forgetTracks(const QSet<QString> &paths);
     void toggleFavorite(const Track &track);
     // Matches title, artist, album and file name in every playlist, in playlist
     // order, stopping at limit results.
@@ -60,6 +63,7 @@ namespace PlaylistsUi {
 
   signals:
     void favoritesChanged();
+    void tracksForgotten();
     void selected(const std::shared_ptr<Playlist::Playlist> item);
     void loaded(const std::shared_ptr<Playlist::Playlist> item);
     void emptied();

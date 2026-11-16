@@ -124,6 +124,30 @@ namespace PlaylistsUi {
     return paths;
   }
 
+  void Controller::forgetTracks(const QSet<QString> &paths) {
+    if (paths.isEmpty()) {
+      return;
+    }
+    bool changed = false;
+    for (const auto &pl : proxy->activeModel()->itemList()) {
+      if (pl == nullptr) {
+        continue;
+      }
+      const QVector<Track> tracks = pl->tracks();
+      for (int i = tracks.size() - 1; i >= 0; --i) {
+        if (paths.contains(tracks.at(i).path())) {
+          pl->removeTrack(i);
+          changed = true;
+        }
+      }
+    }
+    if (!changed) {
+      return;
+    }
+    proxy->activeModel()->persist();
+    emit tracksForgotten();
+  }
+
   void Controller::toggleFavorite(const Track &track) {
     setFavorite(track, !isFavorite(track.path()));
   }

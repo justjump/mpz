@@ -88,6 +88,7 @@ public:
   ~MainWindow() override;
 
 public slots:
+  void onDeleteFilesRequested(const QVector<Track> &tracks);
   void toggleHidden();
   void showWindow();
   void requestQuit();

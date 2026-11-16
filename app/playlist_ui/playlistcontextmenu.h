@@ -24,6 +24,8 @@ namespace PlaylistUi {
 
   signals:
     void removeRequested();
+    // Delete the selected tracks' files from disk, not just from the playlist.
+    void deleteFilesRequested(const QVector<Track> &tracks);
     void trackInfoRequested(const Track &track);
     void tracksChanged(const std::shared_ptr<Playlist::Playlist> pl, const QList<quint64> &uids);
 
@@ -33,6 +35,7 @@ namespace PlaylistUi {
     QLineEdit *search;
 
     QAction remove;
+    QAction delete_files;
     QAction clear_filter;
     QAction show_in_filemanager;
     QAction copy_name;
@@ -48,6 +51,7 @@ namespace PlaylistUi {
     void on_clearFilter();
     void on_copyName();
     void on_showInFilemanager();
+    void on_deleteFiles();
     void on_editTags();
 #ifdef ENABLE_DR_METER
     void on_dynamicRange();

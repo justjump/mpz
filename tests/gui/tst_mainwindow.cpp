@@ -19,6 +19,8 @@
 #include <QLineEdit>
 #include <QListView>
 #include <QListWidget>
+#include <QMessageBox>
+#include <QTemporaryDir>
 #include <QStatusBar>
 #include <QStyle>
 #include <QStyleOptionButton>
@@ -56,6 +58,7 @@ private slots:
   void trayIconStaysOffWhenDisabled();
   void crossPlaylistSearchListsHitsAndJumpsToThem();
   void heartClickAddsTheTrackToFavorites();
+  void deleteFilesDialogRemovesTheFileFromDisk();
 
 private:
   GuiTest::ConfigDir config;
@@ -337,6 +340,37 @@ void TestMainWindow::heartClickAddsTheTrackToFavorites() {
   }());
   QCOMPARE(favorites->name(), QString("Favorites"));
   QCOMPARE(favorites->tracks().size(), 1);
+}
+
+void TestMainWindow::deleteFilesDialogRemovesTheFileFromDisk() {
+  QTemporaryDir dir;
+  QVERIFY(dir.isValid());
+  const QString path = dir.path() + "/kill-me.mp3";
+  {
+    QFile f(path);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write("not really an mp3");
+  }
+  const Track track(path, 0, "artist", "album", "kill me", 1, 2000, 1000, 2, 320, 44100);
+
+  // The handler is modal by design; answer the dialog from inside its event loop.
+  QTimer::singleShot(100, []() {
+    for (QWidget *w : QApplication::topLevelWidgets()) {
+      if (auto *box = qobject_cast<QMessageBox *>(w)) {
+        for (auto *button : box->buttons()) {
+          if (button->text().contains("Delete Permanently")) {
+            button->click();
+            return;
+          }
+        }
+      }
+    }
+  });
+
+  window->onDeleteFilesRequested({track});
+
+  QVERIFY(!QFile::exists(path));
+  QVERIFY(!QDir().exists(path));
 }
 
 void TestMainWindow::trayIconStaysOffWhenDisabled() {

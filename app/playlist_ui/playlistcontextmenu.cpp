@@ -19,6 +19,10 @@ namespace PlaylistUi {
     Q_ASSERT(view);
     Q_ASSERT(search);
 
+    delete_files.setText(tr("Delete files from disk…"));
+    connect(&delete_files, &QAction::triggered, this, &PlaylistContextMenu::on_deleteFiles);
+    delete_files.setIcon(Icons::get(Icons::Icon::Trash));
+
     remove.setText(tr("Remove"));
     connect(&remove, &QAction::triggered, this, &PlaylistContextMenu::removeRequested);
     remove.setIcon(Icons::get(Icons::Icon::Trash));
@@ -104,6 +108,21 @@ namespace PlaylistUi {
     }
     menu.addSeparator();
     menu.addAction(&remove);
+    if (proxy->modus_operandi.get() == ModusOperandi::MODUS_LOCALFS) {
+      // A cue sheet track shares its file with the whole album, so deleting a
+      // single entry there would take the rest with it. Not offered.
+      bool any_deletable = false;
+      for (const auto &i : view->selectionModel()->selectedRows()) {
+        const auto t = proxy->activeModel()->itemAt(proxy->mapToSource(i));
+        if (!t.isMpd() && !t.isStream() && !t.isCue() && !t.path().isEmpty()) {
+          any_deletable = true;
+          break;
+        }
+      }
+      if (any_deletable) {
+        menu.addAction(&delete_files);
+      }
+    }
     menu.exec(view->viewport()->mapToGlobal(pos));
   }
 
@@ -117,6 +136,18 @@ namespace PlaylistUi {
       str << proxy->activeModel()->itemAt(proxy->mapToSource(i)).formattedTitle();
     }
     qApp->clipboard()->setText(str.join('\n'));
+  }
+
+  void PlaylistContextMenu::on_deleteFiles() {
+    QVector<Track> deletable;
+    for (const Track &t : selectedTracks()) {
+      if (!t.isCue() && !t.path().isEmpty()) {
+        deletable << t;
+      }
+    }
+    if (!deletable.isEmpty()) {
+      emit deleteFilesRequested(deletable);
+    }
   }
 
   void PlaylistContextMenu::on_showInFilemanager() {

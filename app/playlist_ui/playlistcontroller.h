@@ -45,6 +45,7 @@ namespace PlaylistUi {
     void createPlaylistFromTracksRequested(const QVector<Track> &tracks, const QString &name);
     void trackInfoRequested(const Track &track);
     void favoriteToggled(const Track &track);
+    void deleteFilesRequested(const QVector<Track> &tracks);
     // Non-zero match count only while a search term is active.
     void searchResultsChanged(int matched, int total);
 
