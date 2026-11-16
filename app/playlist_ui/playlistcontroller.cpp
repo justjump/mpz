@@ -61,6 +61,18 @@ namespace PlaylistUi {
     for (int c = 0; c < view->horizontalHeader()->count(); ++c) {
       view->horizontalHeader()->setSectionResizeMode(c, QHeaderView::Fixed);
     }
+    // The configured columns can be dragged; the widths are saved back as
+    // percentages so a window resize keeps the user's proportions.
+    for (int c = 1; c <= columns_config.count(); ++c) {
+      view->horizontalHeader()->setSectionResizeMode(c, QHeaderView::Interactive);
+    }
+    columns_save_timer = new QTimer(this);
+    columns_save_timer->setSingleShot(true);
+    columns_save_timer->setInterval(400);
+    connect(columns_save_timer, &QTimer::timeout, this, [this]() {
+      global_conf.saveColumnsConfig(columns_config);
+    });
+    connect(view->horizontalHeader(), &QHeaderView::sectionResized, this, &Controller::onSectionResized);
 
     view->viewport()->installEventFilter(this);
     view->installEventFilter(this);
@@ -383,6 +395,7 @@ namespace PlaylistUi {
       view->horizontalHeader()->setMinimumSectionSize(20);
       view->setColumnWidth(0, 20);
 
+      applying_widths = true;
       for (int col = 1; col <= columns_config.count(); col++) {
         auto rel_width = columns_config.width(col);
         if (rel_width > 0) {
@@ -395,6 +408,7 @@ namespace PlaylistUi {
       const int heart_column = columns_config.count() + 1;
       view->horizontalHeader()->setSectionResizeMode(heart_column, QHeaderView::Fixed);
       view->setColumnWidth(heart_column, heart_width);
+      applying_widths = false;
 
     } else if (event->type() == QEvent::WindowActivate) {
       if (restore_scroll_once) {
@@ -449,6 +463,31 @@ namespace PlaylistUi {
       return true;
     }
     return false;
+  }
+
+  void Controller::onSectionResized(int section, int old_size, int new_size) {
+    Q_UNUSED(old_size)
+    Q_UNUSED(new_size)
+    if (applying_widths || section < 1 || section > columns_config.count()) {
+      return;
+    }
+    if (columns_config.stretch(section)) {
+      return;
+    }
+    const int usable = view->width() - 20 - 26;
+    // Ignore drags while the view is collapsed or not laid out yet: the
+    // percentages would come out meaningless.
+    if (usable < 200) {
+      return;
+    }
+    QVector<double> widths;
+    for (int col = 1; col <= columns_config.count(); ++col) {
+      widths << (columns_config.stretch(col) ? 0.0 : double(view->columnWidth(col)) / usable);
+    }
+    columns_config.setWidths(widths);
+    if (columns_save_timer != nullptr) {
+      columns_save_timer->start();
+    }
   }
 
   void Controller::updateSearchStatus() {

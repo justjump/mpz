@@ -153,6 +153,8 @@ set(PROJECT_SOURCES
   app/sandboxnotice.cpp
   app/track.cpp
   app/textdecode.cpp
+  app/playlist_ui/filenametags.cpp
+  app/playlist_ui/tagsfromfilenamedialog.cpp
   app/reveal_in_filemanager.cpp
   app/trayicon.cpp
   app/volumecontrol.cpp

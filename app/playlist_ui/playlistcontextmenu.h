@@ -41,6 +41,7 @@ namespace PlaylistUi {
     QAction copy_name;
     QAction info;
     QAction edit_tags;
+    QAction fill_tags;
 #ifdef ENABLE_DR_METER
     QAction dynamic_range;
 #endif
@@ -53,6 +54,7 @@ namespace PlaylistUi {
     void on_showInFilemanager();
     void on_deleteFiles();
     void on_editTags();
+    void on_fillTagsFromFilename();
 #ifdef ENABLE_DR_METER
     void on_dynamicRange();
 #endif

@@ -1071,12 +1071,65 @@
             <translation>曲目信息</translation>
         </message>
         <message>
+            <source>Fill tags from file name…</source>
+            <translation>从文件名填充标签…</translation>
+        </message>
+        <message>
             <source>Edit tags…</source>
             <translation>编辑标签…</translation>
         </message>
         <message>
             <source>Dynamic range…</source>
             <translation>动态范围…</translation>
+        </message>
+    </context>
+    <context>
+        <name>PlaylistUi::TagsFromFilenameDialog</name>
+        <message>
+            <source>Fill tags from file name</source>
+            <translation>从文件名填充标签</translation>
+        </message>
+        <message>
+            <source>Review the values below, uncheck what should not be written, then apply. Columns for artist and title can be edited in place.</source>
+            <translation>核对下列内容，取消勾选不想写入的行，然后点「应用」。歌手、标题两列可以直接修改。</translation>
+        </message>
+        <message>
+            <source>Overwrite existing tags</source>
+            <translation>覆盖已有标签</translation>
+        </message>
+        <message>
+            <source>File name is "Title - Artist"</source>
+            <translation>文件名是「标题 - 歌手」顺序</translation>
+        </message>
+        <message>
+            <source>Apply</source>
+            <translation>应用</translation>
+        </message>
+        <message>
+            <source>File</source>
+            <translation>文件</translation>
+        </message>
+        <message>
+            <source>Artist</source>
+            <translation>艺术家</translation>
+        </message>
+        <message>
+            <source>Title</source>
+            <translation>标题</translation>
+        </message>
+        <message numerus="yes">
+            <source>%n track(s) to review</source>
+            <translation>
+                <numerusform>待核对 %n 首</numerusform>
+            </translation>
+        </message>
+        <message>
+            <source>Written %1, failed %2: %3</source>
+            <translation>已写入 %1 首，失败 %2 首：%3</translation>
+        </message>
+        <message>
+            <source>Nothing selected</source>
+            <translation>未选择</translation>
         </message>
     </context>
     <context>

@@ -12,6 +12,7 @@
 #include <QLineEdit>
 #include <QMimeData>
 #include <QTableView>
+#include <QHeaderView>
 
 namespace {
   // The editor is created parentless, so it shows up as a top-level widget.
@@ -55,6 +56,7 @@ private slots:
   void selectTrackCentersTheGivenPath();
   void favoriteColumnReflectsFavoritePaths();
   void clickingTheHeartColumnEmitsFavoriteToggled();
+  void draggingAColumnKeepsTheNewWidth();
   void escapeInSearchClearsTheFilter();
   void sortByReordersThePlaylist();
   void unloadClearsTheView();
@@ -252,6 +254,25 @@ void TestPlaylistTracks::clickingTheHeartColumnEmitsFavoriteToggled() {
 
   QCOMPARE(spy.count(), 1);
   QCOMPARE(spy.first().first().value<Track>().path(), QString("/music/two.mp3"));
+}
+
+void TestPlaylistTracks::draggingAColumnKeepsTheNewWidth() {
+  view.resize(900, 400);
+  view.show();
+  QVERIFY(QTest::qWaitForWindowExposed(&view));
+  load({"one"});
+  QTest::qWait(50);
+
+  const int before = view.columnWidth(1);
+  view.horizontalHeader()->resizeSection(1, 120);
+  QTest::qWait(600); // the config write is debounced
+
+  QCOMPARE(view.columnWidth(1), 120);
+  QVERIFY(view.columnWidth(1) != before);
+
+  const auto widths = global->columnsConfig();
+  QVERIFY(widths.width(1) < 0.28);
+  QVERIFY(widths.width(1) > 0.0);
 }
 
 void TestPlaylistTracks::selectTrackCentersTheGivenPath() {

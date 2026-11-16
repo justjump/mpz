@@ -1,5 +1,6 @@
 #include "playlistcontextmenu.h"
 #include "tageditordialog.h"
+#include "tagsfromfilenamedialog.h"
 #include "reveal_in_filemanager.h"
 #include "icons.h"
 #ifdef ENABLE_DR_METER
@@ -42,6 +43,10 @@ namespace PlaylistUi {
     info.setText(tr("Track info"));
     connect(&info, &QAction::triggered, this, &PlaylistContextMenu::on_trackInfo);
     info.setIcon(Icons::get(Icons::Icon::Info));
+
+    fill_tags.setText(tr("Fill tags from file name…"));
+    connect(&fill_tags, &QAction::triggered, this, &PlaylistContextMenu::on_fillTagsFromFilename);
+    fill_tags.setIcon(Icons::get(Icons::Icon::Edit));
 
     edit_tags.setText(tr("Edit tags…"));
     connect(&edit_tags, &QAction::triggered, this, &PlaylistContextMenu::on_editTags);
@@ -99,6 +104,7 @@ namespace PlaylistUi {
       }
       if (any_editable) {
         menu.addAction(&edit_tags);
+        menu.addAction(&fill_tags);
       }
 #ifdef ENABLE_DR_METER
       if (any_local) {
@@ -185,6 +191,26 @@ namespace PlaylistUi {
     dlg->setModal(false);
     connect(dlg, &TagEditorDialog::finished, dlg, &TagEditorDialog::deleteLater);
     connect(dlg, &TagEditorDialog::saved, this, [this, pl](const QList<quint64> &uids) {
+      emit tracksChanged(pl, uids);
+    });
+    dlg->show();
+  }
+
+  void PlaylistContextMenu::on_fillTagsFromFilename() {
+    QVector<Track> fillable;
+    for (const Track &t : selectedTracks()) {
+      if (!t.isCue() && !t.path().isEmpty()) {
+        fillable << t;
+      }
+    }
+    if (fillable.isEmpty()) {
+      return;
+    }
+    auto pl = proxy->activeModel()->playlist();
+    auto *dlg = new TagsFromFilenameDialog(fillable);
+    dlg->setModal(false);
+    connect(dlg, &QDialog::finished, dlg, &QDialog::deleteLater);
+    connect(dlg, &TagsFromFilenameDialog::saved, this, [this, pl](const QList<quint64> &uids) {
       emit tracksChanged(pl, uids);
     });
     dlg->show();

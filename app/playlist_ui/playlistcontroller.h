@@ -69,6 +69,7 @@ namespace PlaylistUi {
 
   private slots:
     void removeSelectedTracks();
+    void onSectionResized(int section, int old_size, int new_size);
     void updateSearchStatus();
     void on_appendAsyncFinished(std::shared_ptr<Playlist::Playlist> pl);
     void on_search(const QString &term);
@@ -95,6 +96,8 @@ namespace PlaylistUi {
     void updateStreamSpans();
     void restoreCursor(quint64 cursor_uid, int fallback_row);
     void eventFilterTableView(QEvent *event);
+    QTimer *columns_save_timer = nullptr;
+    bool applying_widths = false;
     bool eventFilterSearch(QEvent *event);
     void eventFilterViewport(QEvent *event);
     bool handleDnd(QEvent *event);
